@@ -24,6 +24,7 @@ dependencies = [
     "openai",
     "boto3",
     "cohere",
+    "mcp>=1.15.0",
 
     # Alibaba Cloud SDKs
     "alibabacloud_ecd20200930",
@@ -46,4 +47,3 @@ include = [
     "LICENSE",
     "NOTICE",
 ]
-
