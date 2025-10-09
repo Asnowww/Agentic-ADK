@@ -327,6 +327,464 @@ class TrawexToolsTest {
     }
 
     @Nested
+    @DisplayName("航班详情工具测试")
+    class FlightDetailsToolTests {
+
+        @Test
+        @DisplayName("测试有效输入")
+        void testValidInput() {
+            when(mockClient.getFlightDetails(anyString()))
+                .thenReturn("{\"flight_id\": \"FL-123\", \"airline\": \"Emirates\"}");
+            
+            TrawexFlightDetailsTool tool = new TrawexFlightDetailsTool(mockClient);
+            
+            String input = """
+                {
+                  "flight_id": "FL-123"
+                }
+                """;
+            
+            ToolExecuteResult result = tool.run(input, context);
+            
+            assertNotNull(result);
+            assertFalse(result.isError());
+            verify(mockClient).getFlightDetails("FL-123");
+        }
+
+        @Test
+        @DisplayName("测试缺少flight_id参数")
+        void testMissingFlightId() {
+            TrawexFlightDetailsTool tool = new TrawexFlightDetailsTool(mockClient);
+            
+            String input = "{}";
+            
+            ToolExecuteResult result = tool.run(input, context);
+            
+            assertTrue(result.isError());
+            assertTrue(result.getOutput().toString().contains("flight_id is required"));
+        }
+    }
+
+    @Nested
+    @DisplayName("酒店预订工具测试")
+    class HotelBookingToolTests {
+
+        @Test
+        @DisplayName("测试有效预订")
+        void testValidBooking() {
+            when(mockClient.bookHotel(anyString(), anyString(), anyString(), 
+                any(), any()))
+                .thenReturn("{\"booking_id\": \"BK-123\", \"status\": \"confirmed\"}");
+            
+            TrawexHotelBookingTool tool = new TrawexHotelBookingTool(mockClient);
+            
+            String input = """
+                {
+                  "hotel_id": "hotel-123",
+                  "check_in": "2025-12-01",
+                  "check_out": "2025-12-05",
+                  "guest_info": {
+                    "name": "John Doe",
+                    "email": "john@example.com",
+                    "phone": "+1234567890"
+                  },
+                  "payment_info": {
+                    "card_number": "****1234",
+                    "cvv": "***"
+                  }
+                }
+                """;
+            
+            ToolExecuteResult result = tool.run(input, context);
+            
+            assertNotNull(result);
+            assertFalse(result.isError());
+        }
+
+        @Test
+        @DisplayName("测试缺少guest_info")
+        void testMissingGuestInfo() {
+            TrawexHotelBookingTool tool = new TrawexHotelBookingTool(mockClient);
+            
+            String input = """
+                {
+                  "hotel_id": "hotel-123",
+                  "check_in": "2025-12-01",
+                  "check_out": "2025-12-05",
+                  "payment_info": {}
+                }
+                """;
+            
+            ToolExecuteResult result = tool.run(input, context);
+            
+            assertTrue(result.isError());
+            assertTrue(result.getOutput().toString().contains("guest_info is required"));
+        }
+    }
+
+    @Nested
+    @DisplayName("航班预订工具测试")
+    class FlightBookingToolTests {
+
+        @Test
+        @DisplayName("测试有效预订")
+        void testValidBooking() {
+            when(mockClient.bookFlight(anyString(), any(), any()))
+                .thenReturn("{\"booking_id\": \"FB-123\", \"status\": \"confirmed\"}");
+            
+            TrawexFlightBookingTool tool = new TrawexFlightBookingTool(mockClient);
+            
+            String input = """
+                {
+                  "flight_id": "FL-123",
+                  "passenger_info": {
+                    "name": "Jane Smith",
+                    "passport": "P12345678",
+                    "dob": "1990-01-01"
+                  },
+                  "payment_info": {
+                    "card_number": "****5678"
+                  }
+                }
+                """;
+            
+            ToolExecuteResult result = tool.run(input, context);
+            
+            assertNotNull(result);
+            assertFalse(result.isError());
+        }
+
+        @Test
+        @DisplayName("测试缺少passenger_info")
+        void testMissingPassengerInfo() {
+            TrawexFlightBookingTool tool = new TrawexFlightBookingTool(mockClient);
+            
+            String input = """
+                {
+                  "flight_id": "FL-123",
+                  "payment_info": {}
+                }
+                """;
+            
+            ToolExecuteResult result = tool.run(input, context);
+            
+            assertTrue(result.isError());
+            assertTrue(result.getOutput().toString().contains("passenger_info is required"));
+        }
+    }
+
+    @Nested
+    @DisplayName("套餐搜索工具测试")
+    class PackageSearchToolTests {
+
+        @Test
+        @DisplayName("测试有效搜索")
+        void testValidSearch() {
+            when(mockClient.searchPackages(anyString(), anyString(), anyString(), 
+                any(), any()))
+                .thenReturn("{\"packages\": [], \"total\": 0}");
+            
+            TrawexPackageSearchTool tool = new TrawexPackageSearchTool(mockClient);
+            
+            String input = """
+                {
+                  "destination": "Maldives",
+                  "departure_date": "2025-12-01",
+                  "return_date": "2025-12-07",
+                  "adults": 2,
+                  "package_type": "all-inclusive"
+                }
+                """;
+            
+            ToolExecuteResult result = tool.run(input, context);
+            
+            assertNotNull(result);
+            assertFalse(result.isError());
+            verify(mockClient).searchPackages("Maldives", "2025-12-01", "2025-12-07", 
+                2, "all-inclusive");
+        }
+
+        @Test
+        @DisplayName("测试缺少destination")
+        void testMissingDestination() {
+            TrawexPackageSearchTool tool = new TrawexPackageSearchTool(mockClient);
+            
+            String input = """
+                {
+                  "departure_date": "2025-12-01",
+                  "return_date": "2025-12-07"
+                }
+                """;
+            
+            ToolExecuteResult result = tool.run(input, context);
+            
+            assertTrue(result.isError());
+            assertTrue(result.getOutput().toString().contains("destination is required"));
+        }
+    }
+
+    @Nested
+    @DisplayName("套餐详情工具测试")
+    class PackageDetailsToolTests {
+
+        @Test
+        @DisplayName("测试有效输入")
+        void testValidInput() {
+            when(mockClient.getPackageDetails(anyString()))
+                .thenReturn("{\"package_id\": \"PKG-123\", \"name\": \"Luxury Package\"}");
+            
+            TrawexPackageDetailsTool tool = new TrawexPackageDetailsTool(mockClient);
+            
+            String input = """
+                {
+                  "package_id": "PKG-123"
+                }
+                """;
+            
+            ToolExecuteResult result = tool.run(input, context);
+            
+            assertNotNull(result);
+            assertFalse(result.isError());
+            verify(mockClient).getPackageDetails("PKG-123");
+        }
+
+        @Test
+        @DisplayName("测试缺少package_id")
+        void testMissingPackageId() {
+            TrawexPackageDetailsTool tool = new TrawexPackageDetailsTool(mockClient);
+            
+            String input = "{}";
+            
+            ToolExecuteResult result = tool.run(input, context);
+            
+            assertTrue(result.isError());
+            assertTrue(result.getOutput().toString().contains("package_id is required"));
+        }
+    }
+
+    @Nested
+    @DisplayName("活动搜索工具测试")
+    class ActivitySearchToolTests {
+
+        @Test
+        @DisplayName("测试有效搜索")
+        void testValidSearch() {
+            when(mockClient.searchActivities(anyString(), any(), any()))
+                .thenReturn("{\"activities\": [], \"total\": 0}");
+            
+            TrawexActivitySearchTool tool = new TrawexActivitySearchTool(mockClient);
+            
+            String input = """
+                {
+                  "destination": "Paris",
+                  "date": "2025-12-01",
+                  "category": "cultural"
+                }
+                """;
+            
+            ToolExecuteResult result = tool.run(input, context);
+            
+            assertNotNull(result);
+            assertFalse(result.isError());
+            verify(mockClient).searchActivities("Paris", "2025-12-01", "cultural");
+        }
+
+        @Test
+        @DisplayName("测试仅必需参数")
+        void testOnlyRequiredParameters() {
+            when(mockClient.searchActivities(anyString(), any(), any()))
+                .thenReturn("{\"activities\": [], \"total\": 0}");
+            
+            TrawexActivitySearchTool tool = new TrawexActivitySearchTool(mockClient);
+            
+            String input = """
+                {
+                  "destination": "Rome"
+                }
+                """;
+            
+            ToolExecuteResult result = tool.run(input, context);
+            
+            assertFalse(result.isError());
+            verify(mockClient).searchActivities("Rome", null, null);
+        }
+
+        @Test
+        @DisplayName("测试缺少destination")
+        void testMissingDestination() {
+            TrawexActivitySearchTool tool = new TrawexActivitySearchTool(mockClient);
+            
+            String input = """
+                {
+                  "date": "2025-12-01"
+                }
+                """;
+            
+            ToolExecuteResult result = tool.run(input, context);
+            
+            assertTrue(result.isError());
+            assertTrue(result.getOutput().toString().contains("destination is required"));
+        }
+    }
+
+    @Nested
+    @DisplayName("活动预订工具测试")
+    class ActivityBookingToolTests {
+
+        @Test
+        @DisplayName("测试有效预订")
+        void testValidBooking() {
+            when(mockClient.bookActivity(anyString(), anyString(), anyInt(), 
+                any(), any()))
+                .thenReturn("{\"booking_id\": \"ACT-123\", \"status\": \"confirmed\"}");
+            
+            TrawexActivityBookingTool tool = new TrawexActivityBookingTool(mockClient);
+            
+            String input = """
+                {
+                  "activity_id": "ACT-456",
+                  "date": "2025-12-01",
+                  "participants": 4,
+                  "participant_info": {
+                    "lead_name": "Alice Brown",
+                    "email": "alice@example.com"
+                  },
+                  "payment_info": {
+                    "method": "credit_card"
+                  }
+                }
+                """;
+            
+            ToolExecuteResult result = tool.run(input, context);
+            
+            assertNotNull(result);
+            assertFalse(result.isError());
+        }
+
+        @Test
+        @DisplayName("测试无效参与人数")
+        void testInvalidParticipants() {
+            TrawexActivityBookingTool tool = new TrawexActivityBookingTool(mockClient);
+            
+            String input = """
+                {
+                  "activity_id": "ACT-456",
+                  "date": "2025-12-01",
+                  "participants": 0,
+                  "participant_info": {},
+                  "payment_info": {}
+                }
+                """;
+            
+            ToolExecuteResult result = tool.run(input, context);
+            
+            assertTrue(result.isError());
+            assertTrue(result.getOutput().toString().contains("valid participants count is required"));
+        }
+    }
+
+    @Nested
+    @DisplayName("租车搜索工具测试")
+    class CarRentalSearchToolTests {
+
+        @Test
+        @DisplayName("测试有效搜索")
+        void testValidSearch() {
+            when(mockClient.searchCarRentals(anyString(), anyString(), anyString(), 
+                any(), any()))
+                .thenReturn("{\"cars\": [], \"total\": 0}");
+            
+            TrawexCarRentalSearchTool tool = new TrawexCarRentalSearchTool(mockClient);
+            
+            String input = """
+                {
+                  "pickup_location": "JFK Airport",
+                  "pickup_date": "2025-12-01 10:00",
+                  "dropoff_date": "2025-12-05 10:00",
+                  "dropoff_location": "LAX Airport",
+                  "car_type": "suv"
+                }
+                """;
+            
+            ToolExecuteResult result = tool.run(input, context);
+            
+            assertNotNull(result);
+            assertFalse(result.isError());
+            verify(mockClient).searchCarRentals("JFK Airport", "2025-12-01 10:00", 
+                "2025-12-05 10:00", "LAX Airport", "suv");
+        }
+
+        @Test
+        @DisplayName("测试缺少pickup_location")
+        void testMissingPickupLocation() {
+            TrawexCarRentalSearchTool tool = new TrawexCarRentalSearchTool(mockClient);
+            
+            String input = """
+                {
+                  "pickup_date": "2025-12-01 10:00",
+                  "dropoff_date": "2025-12-05 10:00"
+                }
+                """;
+            
+            ToolExecuteResult result = tool.run(input, context);
+            
+            assertTrue(result.isError());
+            assertTrue(result.getOutput().toString().contains("pickup_location is required"));
+        }
+    }
+
+    @Nested
+    @DisplayName("租车预订工具测试")
+    class CarRentalBookingToolTests {
+
+        @Test
+        @DisplayName("测试有效预订")
+        void testValidBooking() {
+            when(mockClient.bookCarRental(anyString(), any(), any()))
+                .thenReturn("{\"booking_id\": \"CAR-789\", \"status\": \"confirmed\"}");
+            
+            TrawexCarRentalBookingTool tool = new TrawexCarRentalBookingTool(mockClient);
+            
+            String input = """
+                {
+                  "car_id": "CAR-001",
+                  "driver_info": {
+                    "name": "Bob Wilson",
+                    "license": "DL123456",
+                    "phone": "+1234567890"
+                  },
+                  "payment_info": {
+                    "card_number": "****9999"
+                  }
+                }
+                """;
+            
+            ToolExecuteResult result = tool.run(input, context);
+            
+            assertNotNull(result);
+            assertFalse(result.isError());
+        }
+
+        @Test
+        @DisplayName("测试缺少driver_info")
+        void testMissingDriverInfo() {
+            TrawexCarRentalBookingTool tool = new TrawexCarRentalBookingTool(mockClient);
+            
+            String input = """
+                {
+                  "car_id": "CAR-001",
+                  "payment_info": {}
+                }
+                """;
+            
+            ToolExecuteResult result = tool.run(input, context);
+            
+            assertTrue(result.isError());
+            assertTrue(result.getOutput().toString().contains("driver_info is required"));
+        }
+    }
+
+    @Nested
     @DisplayName("工具工厂测试")
     class ToolFactoryTests {
 
@@ -378,6 +836,42 @@ class TrawexToolsTest {
             
             assertNotNull(tools);
             assertEquals(3, tools.size());
+        }
+
+        @Test
+        @DisplayName("测试获取所有套餐工具")
+        void testGetPackageTools() {
+            TrawexToolFactory factory = new TrawexToolFactory(mockClient);
+            List<BaseTool> tools = factory.getPackageTools();
+            
+            assertNotNull(tools);
+            assertEquals(2, tools.size());
+            assertTrue(tools.stream().anyMatch(t -> t.getName().equals("Trawex.search_packages")));
+            assertTrue(tools.stream().anyMatch(t -> t.getName().equals("Trawex.get_package_details")));
+        }
+
+        @Test
+        @DisplayName("测试获取所有活动工具")
+        void testGetActivityTools() {
+            TrawexToolFactory factory = new TrawexToolFactory(mockClient);
+            List<BaseTool> tools = factory.getActivityTools();
+            
+            assertNotNull(tools);
+            assertEquals(2, tools.size());
+            assertTrue(tools.stream().anyMatch(t -> t.getName().equals("Trawex.search_activities")));
+            assertTrue(tools.stream().anyMatch(t -> t.getName().equals("Trawex.book_activity")));
+        }
+
+        @Test
+        @DisplayName("测试获取所有租车工具")
+        void testGetCarRentalTools() {
+            TrawexToolFactory factory = new TrawexToolFactory(mockClient);
+            List<BaseTool> tools = factory.getCarRentalTools();
+            
+            assertNotNull(tools);
+            assertEquals(2, tools.size());
+            assertTrue(tools.stream().anyMatch(t -> t.getName().equals("Trawex.search_car_rentals")));
+            assertTrue(tools.stream().anyMatch(t -> t.getName().equals("Trawex.book_car_rental")));
         }
 
         @Test
@@ -505,6 +999,87 @@ class TrawexToolsTest {
             
             assertNotNull(result);
             System.out.println("Flight Search Result: " + result.getOutput());
+        }
+
+        @Test
+        @EnabledIfEnvironmentVariable(named = "TRAWEX_API_KEY", matches = ".+")
+        @DisplayName("集成测试 - 搜索套餐")
+        void integrationTestSearchPackages() {
+            TrawexPackageSearchTool tool = new TrawexPackageSearchTool();
+            
+            String input = """
+                {
+                  "destination": "Bali",
+                  "departure_date": "2025-12-01",
+                  "return_date": "2025-12-07",
+                  "adults": 2,
+                  "package_type": "honeymoon"
+                }
+                """;
+            
+            ToolExecuteResult result = tool.run(input, context);
+            
+            assertNotNull(result);
+            System.out.println("Package Search Result: " + result.getOutput());
+        }
+
+        @Test
+        @EnabledIfEnvironmentVariable(named = "TRAWEX_API_KEY", matches = ".+")
+        @DisplayName("集成测试 - 搜索活动")
+        void integrationTestSearchActivities() {
+            TrawexActivitySearchTool tool = new TrawexActivitySearchTool();
+            
+            String input = """
+                {
+                  "destination": "Paris",
+                  "date": "2025-12-01",
+                  "category": "museums"
+                }
+                """;
+            
+            ToolExecuteResult result = tool.run(input, context);
+            
+            assertNotNull(result);
+            System.out.println("Activity Search Result: " + result.getOutput());
+        }
+
+        @Test
+        @EnabledIfEnvironmentVariable(named = "TRAWEX_API_KEY", matches = ".+")
+        @DisplayName("集成测试 - 搜索租车")
+        void integrationTestSearchCarRentals() {
+            TrawexCarRentalSearchTool tool = new TrawexCarRentalSearchTool();
+            
+            String input = """
+                {
+                  "pickup_location": "LAX Airport",
+                  "pickup_date": "2025-12-01 10:00",
+                  "dropoff_date": "2025-12-05 10:00",
+                  "car_type": "economy"
+                }
+                """;
+            
+            ToolExecuteResult result = tool.run(input, context);
+            
+            assertNotNull(result);
+            System.out.println("Car Rental Search Result: " + result.getOutput());
+        }
+
+        @Test
+        @EnabledIfEnvironmentVariable(named = "TRAWEX_API_KEY", matches = ".+")
+        @DisplayName("集成测试 - 获取航班详情")
+        void integrationTestGetFlightDetails() {
+            TrawexFlightDetailsTool tool = new TrawexFlightDetailsTool();
+            
+            String input = """
+                {
+                  "flight_id": "FL-MOCK-123"
+                }
+                """;
+            
+            ToolExecuteResult result = tool.run(input, context);
+            
+            assertNotNull(result);
+            System.out.println("Flight Details Result: " + result.getOutput());
         }
     }
 }
