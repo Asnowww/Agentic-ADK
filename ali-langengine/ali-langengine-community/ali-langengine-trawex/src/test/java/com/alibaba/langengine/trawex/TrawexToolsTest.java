@@ -367,7 +367,7 @@ class TrawexToolsTest {
             List<BaseTool> tools = factory.getHotelTools();
             
             assertNotNull(tools);
-            assertEquals(2, tools.size());
+            assertEquals(3, tools.size());
         }
 
         @Test
@@ -377,7 +377,7 @@ class TrawexToolsTest {
             List<BaseTool> tools = factory.getFlightTools();
             
             assertNotNull(tools);
-            assertEquals(1, tools.size());
+            assertEquals(3, tools.size());
         }
 
         @Test
@@ -387,7 +387,7 @@ class TrawexToolsTest {
             List<BaseTool> tools = factory.getAllTools();
             
             assertNotNull(tools);
-            assertEquals(3, tools.size());
+            assertEquals(12, tools.size());
         }
 
         @Test
@@ -406,6 +406,10 @@ class TrawexToolsTest {
             BaseTool flightSearch = factory.getToolByName("Trawex.search_flights");
             assertNotNull(flightSearch);
             assertTrue(flightSearch instanceof TrawexFlightSearchTool);
+            
+            BaseTool packageSearch = factory.getToolByName("Trawex.search_packages");
+            assertNotNull(packageSearch);
+            assertTrue(packageSearch instanceof TrawexPackageSearchTool);
         }
 
         @Test
