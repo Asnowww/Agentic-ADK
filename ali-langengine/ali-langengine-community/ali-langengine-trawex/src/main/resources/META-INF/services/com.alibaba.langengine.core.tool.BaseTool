@@ -1,0 +1,3 @@
+com.alibaba.langengine.trawex.tool.TrawexHotelSearchTool
+com.alibaba.langengine.trawex.tool.TrawexHotelDetailsTool
+com.alibaba.langengine.trawex.tool.TrawexFlightSearchTool
