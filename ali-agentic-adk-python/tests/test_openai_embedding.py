@@ -23,10 +23,15 @@ import unittest
 from unittest.mock import MagicMock, patch
 
 from ali_agentic_adk_python.core.common.exceptions import EmbeddingProviderError
+from ali_agentic_adk_python.config import OpenAISettings
 from ali_agentic_adk_python.core.embedding.openai_embedding import OpenAIEmbedding
 
 
 class OpenAIEmbeddingTestCase(unittest.TestCase):
+    def test_missing_api_key_raises(self):
+        with self.assertRaises(ValueError):
+            OpenAIEmbedding()
+
     @patch("ali_agentic_adk_python.core.embedding.openai_embedding.OpenAI")
     def test_embed_documents_returns_vectors(self, openai_cls):
         client_mock = MagicMock()
@@ -99,6 +104,41 @@ class OpenAIEmbeddingTestCase(unittest.TestCase):
         vector = embedding.embed_query("hello world")
 
         self.assertEqual(vector, [0.7, 0.8, 0.9])
+
+    @patch("ali_agentic_adk_python.core.embedding.openai_embedding.OpenAI")
+    def test_from_settings_uses_configuration(self, openai_cls):
+        client_mock = MagicMock()
+        openai_cls.return_value = client_mock
+        client_mock.embeddings.create.return_value = MagicMock(
+            data=[MagicMock(embedding=[0.2, 0.3])]
+        )
+
+        settings = OpenAISettings(
+            api_key="key",
+            base_url="https://example.com/v1",
+            embedding_model="text-embedding-3-large",
+            user="alice",
+        )
+
+        embedding = OpenAIEmbedding.from_settings(
+            settings,
+            request_options={"encoding_format": "float"},
+        )
+
+        openai_cls.assert_called_once_with(
+            api_key="key",
+            base_url="https://example.com/v1",
+        )
+        self.assertEqual(embedding.model, "text-embedding-3-large")
+
+        embedding.embed_documents(["hello"])
+
+        client_mock.embeddings.create.assert_called_with(
+            model="text-embedding-3-large",
+            input=["hello"],
+            user="alice",
+            encoding_format="float",
+        )
 
 
 if __name__ == "__main__":

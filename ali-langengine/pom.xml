@@ -83,9 +83,11 @@
 		<module>ali-langengine-community/ali-langengine-polardb</module>
 		<module>ali-langengine-community/ali-langengine-pinecone</module>
 		<module>ali-langengine-community/ali-langengine-milvus</module>
+		<module>ali-langengine-community/ali-langengine-omibase</module>
 		<module>ali-langengine-community/ali-langengine-marqo</module>
 		<module>ali-langengine-community/ali-langengine-chroma</module>
 		<module>ali-langengine-community/ali-langengine-hnswlib</module>
+		<module>ali-langengine-community/ali-langengine-ngt</module>
 		<module>ali-langengine-community/ali-langengine-proxima</module>
 		<module>ali-langengine-community/ali-langengine-txtai</module>
 		<module>ali-langengine-community/ali-langengine-typesense</module>
@@ -150,6 +152,7 @@
 		<module>ali-langengine-community/ali-langengine-wenxin</module>
 		<module>ali-langengine-community/ali-langengine-douyin</module>
 		<module>ali-langengine-community/ali-langengine-zhihu</module>
+		<module>ali-langengine-community/ali-langengine-wikipedia</module>
 		<module>ali-langengine-community/ali-langengine-kagi</module>
     <module>ali-langengine-community/ali-langengine-aliyun-oss</module>
 		<module>ali-langengine-community/ali-langengine-qiniu-kodo</module>
@@ -196,6 +199,7 @@
     <module>ali-langengine-community/ali-langengine-sms</module>
     <module>ali-langengine-community/ali-langengine-tair</module>
     <module>ali-langengine-community/ali-langengine-tencent-translate</module>
+    <module>ali-langengine-community/ali-langengine-tencentvdb</module>
     <module>ali-langengine-community/ali-langengine-volcengine-translate</module>
     <module>ali-langengine-community/ali-langengine-wecom</module>
     <module>ali-langengine-community/ali-langengine-wework</module>
@@ -211,6 +215,12 @@
     <module>ali-langengine-community/ali-langengine-arcneural</module>
     <module>ali-langengine-community/ali-langengine-solr</module>
 		<module>ali-langengine-community/ali-langengine-docusign</module>
+		<module>ali-langengine-community/ali-langengine-vertexai-vectorsearch</module>
+		<module>ali-langengine-community/ali-langengine-atlas</module>
+		<module>ali-langengine-community/ali-langengine-dashvector</module>
+		<module>ali-langengine-community/ali-langengine-vectordb-rust</module>
+		<module>ali-langengine-community/ali-langengine-vectra</module>
+		<module>ali-langengine-community/ali-langengine-tile38</module>
   </modules>
 
 	<dependencyManagement>

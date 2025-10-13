@@ -22,12 +22,13 @@
 from __future__ import annotations
 
 import logging
-from typing import Any, Dict, List, Sequence
+from typing import Any, Dict, List, Sequence, Optional
 
 from openai import OpenAI
 
 from ..common.exceptions import EmbeddingProviderError
 from .basic_embedding import BasicEmbedding
+from ali_agentic_adk_python.config import OpenAISettings
 
 logger = logging.getLogger(__name__)
 
@@ -37,7 +38,7 @@ class OpenAIEmbedding(BasicEmbedding):
 
     def __init__(
         self,
-        api_key: str,
+        api_key: Optional[str] = None,
         model: str = "text-embedding-3-small",
         *,
         base_url: str | None = None,
@@ -45,7 +46,18 @@ class OpenAIEmbedding(BasicEmbedding):
         user: str | None = None,
         client_options: Dict[str, Any] | None = None,
         request_options: Dict[str, Any] | None = None,
+        settings: Optional[OpenAISettings] = None,
     ) -> None:
+        if settings:
+            api_key = settings.api_key_value
+            if settings.embedding_model and model == "text-embedding-3-small":
+                model = settings.embedding_model
+            if settings.base_url and base_url is None:
+                base_url = settings.base_url
+            if settings.user and user is None:
+                user = settings.user
+        if not api_key:
+            raise ValueError("OpenAIEmbedding requires an API key")
         super().__init__(model=model)
         options: Dict[str, Any] = {"api_key": api_key}
         if base_url:
@@ -56,6 +68,17 @@ class OpenAIEmbedding(BasicEmbedding):
         self._dimensions = dimensions
         self._user = user
         self._request_options = request_options.copy() if request_options else {}
+
+    @classmethod
+    def from_settings(
+        cls,
+        settings: OpenAISettings,
+        *,
+        model: Optional[str] = None,
+        **kwargs: Any,
+    ) -> "OpenAIEmbedding":
+        resolved_model = model or settings.embedding_model
+        return cls(model=resolved_model, settings=settings, **kwargs)
 
     def embed_documents(self, texts: Sequence[str]) -> List[List[float]]:
         normalized_inputs = self._normalize_inputs(texts)

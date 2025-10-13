@@ -22,6 +22,8 @@ dependencies = [
     "aiohttp",
     "dashscope",
     "openai",
+    "pydantic>=2.6,<3.0",
+    "pydantic-settings>=2.6,<3.0",
     "boto3",
     "cohere",
 
