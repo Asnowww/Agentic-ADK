@@ -80,4 +80,11 @@ public class SqliteVssException extends RuntimeException {
     public static SqliteVssException configError(String message) {
         return new SqliteVssException("SQLITE_VSS_CONFIG_ERROR", message);
     }
+
+    /**
+     * Configuration error with cause
+     */
+    public static SqliteVssException configError(String message, Throwable cause) {
+        return new SqliteVssException("SQLITE_VSS_CONFIG_ERROR", message, cause);
+    }
 }

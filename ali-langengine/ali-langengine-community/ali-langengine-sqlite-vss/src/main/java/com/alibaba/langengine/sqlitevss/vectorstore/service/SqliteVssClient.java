@@ -78,6 +78,43 @@ public class SqliteVssClient implements AutoCloseable {
         }
     }
 
+    /**
+     * 验证集合名称，防止SQL注入攻击
+     * 集合名称只能包含字母、数字、下划线，不能以数字开头，长度不超过64个字符
+     * 
+     * @param collectionName 集合名称
+     * @throws SqliteVssException 如果集合名称无效
+     */
+    private void validateCollectionName(String collectionName) {
+        if (StringUtils.isBlank(collectionName)) {
+            throw SqliteVssException.configError("Collection name cannot be null or empty");
+        }
+        
+        if (collectionName.length() > 64) {
+            throw SqliteVssException.configError("Collection name cannot exceed 64 characters");
+        }
+        
+        // 只允许字母、数字、下划线，且不能以数字开头
+        if (!collectionName.matches("^[a-zA-Z_][a-zA-Z0-9_]*$")) {
+            throw SqliteVssException.configError(
+                "Collection name can only contain letters, numbers, and underscores, and cannot start with a number. Invalid name: " + collectionName);
+        }
+        
+        // 检查SQL关键字黑名单
+        String upperCaseName = collectionName.toUpperCase();
+        String[] sqlKeywords = {
+            "SELECT", "INSERT", "UPDATE", "DELETE", "DROP", "CREATE", "ALTER", "INDEX", 
+            "TABLE", "DATABASE", "SCHEMA", "VIEW", "TRIGGER", "FUNCTION", "PROCEDURE",
+            "UNION", "WHERE", "ORDER", "GROUP", "HAVING", "JOIN", "ON", "AS"
+        };
+        
+        for (String keyword : sqlKeywords) {
+            if (upperCaseName.equals(keyword)) {
+                throw SqliteVssException.configError("Collection name cannot be a SQL keyword: " + collectionName);
+            }
+        }
+    }
+
     public void createCollectionIfNotExists(String collectionName) {
         String createTableSql = String.format(
             "CREATE TABLE IF NOT EXISTS %s (" +
@@ -110,12 +147,15 @@ public class SqliteVssClient implements AutoCloseable {
     }
 
     private void createVectorIndex(String collectionName) {
+        validateCollectionName(collectionName);
         // SQLite-VSS extension would be loaded here in a real implementation
         // For now, we'll just log that we would create a vector index
         log.info("Vector index would be created for collection '{}' with extension", collectionName);
     }
 
     public void insertDocument(SqliteVssInsertRequest request) {
+        validateCollectionName(request.getCollectionName());
+        
         String sql = request.isUpsert() 
             ? String.format("INSERT OR REPLACE INTO %s (id, content, vector, metadata, updated_at) VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)", request.getCollectionName())
             : String.format("INSERT INTO %s (id, content, vector, metadata) VALUES (?, ?, ?, ?)", request.getCollectionName());
@@ -159,6 +199,8 @@ public class SqliteVssClient implements AutoCloseable {
         }
 
         String collectionName = requests.get(0).getCollectionName();
+        validateCollectionName(collectionName);
+        
         boolean isUpsert = requests.get(0).isUpsert();
         
         String sql = isUpsert 
@@ -241,6 +283,8 @@ public class SqliteVssClient implements AutoCloseable {
     }
 
     private String buildSearchSql(SqliteVssSearchRequest request) {
+        validateCollectionName(request.getCollectionName());
+        
         StringBuilder sql = new StringBuilder();
         sql.append("SELECT id, content, metadata, vector");
         
@@ -316,6 +360,8 @@ public class SqliteVssClient implements AutoCloseable {
     }
 
     public boolean deleteDocument(String collectionName, String id) {
+        validateCollectionName(collectionName);
+        
         String sql = String.format("DELETE FROM %s WHERE id = ?", collectionName);
         
         try (Connection conn = dataSource.getConnection();

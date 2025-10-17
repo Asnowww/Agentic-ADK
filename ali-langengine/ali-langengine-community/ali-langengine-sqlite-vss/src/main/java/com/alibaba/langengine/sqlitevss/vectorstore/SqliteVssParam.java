@@ -128,6 +128,26 @@ public class SqliteVssParam {
          */
         @Builder.Default
         private int rebuildThreshold = 10000;
+
+        /**
+         * 验证索引参数的有效性
+         * 
+         * @throws SqliteVssException 如果参数无效
+         */
+        public void validate() {
+            if (indexType == null || indexType.trim().isEmpty()) {
+                throw SqliteVssException.configError("Index type cannot be null or empty");
+            }
+            
+            String normalizedType = indexType.toLowerCase().trim();
+            if (!normalizedType.equals("flat")) {
+                throw SqliteVssException.configError("Unsupported index type: " + indexType + ". Currently only 'flat' is supported");
+            }
+            
+            if (rebuildThreshold <= 0) {
+                throw SqliteVssException.configError("Rebuild threshold must be greater than 0, got: " + rebuildThreshold);
+            }
+        }
     }
 
     /**
@@ -135,6 +155,50 @@ public class SqliteVssParam {
      */
     public static SqliteVssParam defaultParam() {
         return SqliteVssParam.builder().build();
+    }
+
+    /**
+     * 验证参数的有效性
+     * 
+     * @throws SqliteVssException 如果参数无效
+     */
+    public void validate() {
+        if (dbPath == null || dbPath.trim().isEmpty()) {
+            throw SqliteVssException.configError("Database path cannot be null or empty");
+        }
+        
+        if (collectionName == null || collectionName.trim().isEmpty()) {
+            throw SqliteVssException.configError("Collection name cannot be null or empty");
+        }
+        
+        if (vectorDimension <= 0) {
+            throw SqliteVssException.configError("Vector dimension must be greater than 0, got: " + vectorDimension);
+        }
+        
+        if (vectorDimension > 10000) {
+            throw SqliteVssException.configError("Vector dimension too large (max 10000), got: " + vectorDimension);
+        }
+        
+        if (distanceMetric == null || distanceMetric.trim().isEmpty()) {
+            throw SqliteVssException.configError("Distance metric cannot be null or empty");
+        }
+        
+        String normalizedMetric = distanceMetric.toLowerCase().trim();
+        if (!normalizedMetric.equals("cosine") && !normalizedMetric.equals("l2") && !normalizedMetric.equals("inner_product")) {
+            throw SqliteVssException.configError("Unsupported distance metric: " + distanceMetric + ". Supported: cosine, l2, inner_product");
+        }
+        
+        if (maxPoolSize <= 0) {
+            throw SqliteVssException.configError("Max pool size must be greater than 0, got: " + maxPoolSize);
+        }
+        
+        if (connectionTimeoutSeconds <= 0) {
+            throw SqliteVssException.configError("Connection timeout must be greater than 0, got: " + connectionTimeoutSeconds);
+        }
+        
+        if (indexParam != null) {
+            indexParam.validate();
+        }
     }
 
     /**

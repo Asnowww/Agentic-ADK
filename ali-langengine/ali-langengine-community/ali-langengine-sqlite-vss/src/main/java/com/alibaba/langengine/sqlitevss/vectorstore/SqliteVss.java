@@ -99,6 +99,9 @@ public class SqliteVss extends VectorStore implements Closeable {
             throw SqliteVssException.configError("Embeddings cannot be null");
         }
 
+        // 验证参数有效性
+        param.validate();
+
         this.param = param;
         this.embedding = embedding;
         this.collectionName = param.getCollectionName();
@@ -108,16 +111,12 @@ public class SqliteVss extends VectorStore implements Closeable {
     }
 
     private static SqliteVssParam createDefaultParam(String collectionName) {
-        String dbPath = StringUtils.isNotBlank(SqliteVssConfiguration.SQLITE_VSS_DB_PATH) 
-            ? SqliteVssConfiguration.SQLITE_VSS_DB_PATH 
-            : "vectorstore.db";
-        
         return SqliteVssParam.builder()
-                .dbPath(dbPath)
+                .dbPath(SqliteVssConfiguration.getDbPath())
                 .collectionName(StringUtils.isNotBlank(collectionName) ? collectionName : "documents")
-                .maxPoolSize(Integer.parseInt(SqliteVssConfiguration.SQLITE_VSS_MAX_POOL_SIZE))
-                .connectionTimeoutSeconds(Long.parseLong(SqliteVssConfiguration.SQLITE_VSS_CONNECTION_TIMEOUT))
-                .maxIdleTimeSeconds(Long.parseLong(SqliteVssConfiguration.SQLITE_VSS_MAX_IDLE_TIME))
+                .maxPoolSize(SqliteVssConfiguration.getMaxPoolSize())
+                .connectionTimeoutSeconds(SqliteVssConfiguration.getConnectionTimeout())
+                .maxIdleTimeSeconds(SqliteVssConfiguration.getMaxIdleTime())
                 .build();
     }
 
