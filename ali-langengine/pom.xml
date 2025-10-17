@@ -83,6 +83,7 @@
 		<module>ali-langengine-community/ali-langengine-polardb</module>
 		<module>ali-langengine-community/ali-langengine-pinecone</module>
 		<module>ali-langengine-community/ali-langengine-milvus</module>
+		<module>ali-langengine-community/ali-langengine-infinity</module>
 		<module>ali-langengine-community/ali-langengine-omibase</module>
 		<module>ali-langengine-community/ali-langengine-marqo</module>
 		<module>ali-langengine-community/ali-langengine-chroma</module>
