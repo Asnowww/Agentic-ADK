@@ -99,6 +99,7 @@
 		<module>ali-langengine-community/ali-langengine-djl</module>
 		<module>ali-langengine-community/ali-langengine-huggingface</module>
 		<module>ali-langengine-community/ali-langengine-sqlite</module>
+		<module>ali-langengine-community/ali-langengine-sqlite-vss</module>
 		<module>ali-langengine-community/ali-langengine-xingchen</module>
 		<module>ali-langengine-community/ali-langengine-xinghuo</module>
 		<module>ali-langengine-community/ali-langengine-msearch</module>
