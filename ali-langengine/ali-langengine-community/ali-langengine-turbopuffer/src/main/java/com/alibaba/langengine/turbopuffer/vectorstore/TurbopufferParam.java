@@ -27,32 +27,32 @@ public class TurbopufferParam {
     /**
      * 向量字段名
      */
-    private String fieldNameEmbedding = "embeddings";
+    String fieldNameEmbedding = "embeddings";
 
     /**
      * 内容字段名
      */
-    private String fieldNamePageContent = "content";
+    String fieldNamePageContent = "content";
 
     /**
      * 唯一ID字段名
      */
-    private String fieldNameUniqueId = "id";
+    String fieldNameUniqueId = "id";
 
     /**
      * 距离度量类型 (cosine, euclidean, dot_product)
      */
-    private String distanceMetric = "cosine";
+    String distanceMetric = "cosine";
 
     /**
      * 自定义搜索扩展参数
      */
-    private Map<String, Object> searchParams = JSON.parseObject("{}");
+    Map<String, Object> searchParams = JSON.parseObject("{}");
 
     /**
      * 初始化参数, 用于创建Namespace
      */
-    private InitParam initParam = new InitParam();
+    InitParam initParam = new InitParam();
 
     @Data
     public static class InitParam {
@@ -60,33 +60,111 @@ public class TurbopufferParam {
         /**
          * 是否使用uniqueId作为唯一键, 如果是的话, addDocuments的时候uniqueId不要为空
          */
-        private boolean fieldUniqueIdAsPrimaryKey = true;
+        boolean fieldUniqueIdAsPrimaryKey = true;
 
         /**
          * embeddings字段向量维度, 如果设置为0, 则会通过embedding模型查询一条数据, 看维度是多少
          */
-        private int fieldEmbeddingsDimension = 1536;
+        int fieldEmbeddingsDimension = 1536;
 
         /**
          * 请求超时时间（毫秒）
          */
-        private int requestTimeoutMs = 30000;
+        int requestTimeoutMs = 30000;
 
         /**
          * 连接超时时间（毫秒）
          */
-        private int connectTimeoutMs = 10000;
+        int connectTimeoutMs = 10000;
 
         /**
          * 读取超时时间（毫秒）
          */
-        private int readTimeoutMs = 30000;
+        int readTimeoutMs = 30000;
 
         /**
          * 最大重试次数
          */
-        private int maxRetries = 3;
+        int maxRetries = 3;
 
+        /**
+         * 连接池配置
+         */
+        ConnectionPoolConfig connectionPool = new ConnectionPoolConfig();
+
+        /**
+         * 批量处理配置
+         */
+        BatchConfig batch = new BatchConfig();
+
+        /**
+         * 熔断器配置
+         */
+        CircuitBreakerConfig circuitBreaker = new CircuitBreakerConfig();
+    }
+
+    @Data
+    public static class ConnectionPoolConfig {
+        /**
+         * 最大空闲连接数
+         */
+        int maxIdleConnections = 5;
+
+        /**
+         * 连接存活时间（分钟）
+         */
+        long keepAliveDurationMinutes = 5;
+
+        /**
+         * 最大连接数
+         */
+        int maxConnections = 20;
+    }
+
+    @Data
+    public static class BatchConfig {
+        /**
+         * 批量写入大小
+         */
+        int batchSize = 100;
+
+        /**
+         * 批量写入超时时间（毫秒）
+         */
+        int batchTimeoutMs = 5000;
+
+        /**
+         * 是否启用批量处理
+         */
+        boolean enableBatch = true;
+
+        /**
+         * 批量队列最大大小
+         */
+        int maxQueueSize = 1000;
+    }
+
+    @Data
+    public static class CircuitBreakerConfig {
+        /**
+         * 是否启用熔断器
+         */
+        boolean enabled = true;
+
+        /**
+         * 失败阈值
+         */
+        int failureThreshold = 5;
+
+        /**
+         * 恢复超时时间（毫秒）
+         */
+        long recoveryTimeoutMs = 60000;
+
+        /**
+         * 监控窗口大小
+         */
+        int monitoringWindowSize = 10;
     }
 
 }

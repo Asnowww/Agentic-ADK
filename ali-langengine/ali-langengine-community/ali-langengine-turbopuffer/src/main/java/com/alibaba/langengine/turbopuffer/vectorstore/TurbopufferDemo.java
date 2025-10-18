@@ -27,7 +27,7 @@ public class TurbopufferDemo {
     public static void main(String[] args) {
         // 创建Turbopuffer实例
         TurbopufferParam param = new TurbopufferParam();
-        param.getInitParam().setFieldEmbeddingsDimension(1536);
+        param.initParam.fieldEmbeddingsDimension = 1536;
         
         Turbopuffer turbopuffer = new Turbopuffer("demo_namespace", param);
         turbopuffer.setEmbedding(new FakeEmbeddings());
@@ -72,6 +72,11 @@ public class TurbopufferDemo {
                 System.out.println("   Score: " + result.getScore());
                 System.out.println();
             }
+
+            // 演示删除功能
+            System.out.println("Demonstrating document deletion...");
+            turbopuffer.deleteVectors(Lists.newArrayList("doc1"));
+            System.out.println("Document deleted successfully!");
 
         } catch (Exception e) {
             System.err.println("Error occurred: " + e.getMessage());

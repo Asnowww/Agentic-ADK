@@ -25,6 +25,8 @@ import lombok.EqualsAndHashCode;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 
+import java.util.Map;
+
 import java.util.List;
 
 import static com.alibaba.langengine.turbopuffer.TurbopufferConfiguration.TURBOPUFFER_API_KEY;
@@ -96,6 +98,30 @@ public class Turbopuffer extends VectorStore {
             return;
         }
         documents = embedding.embedDocument(documents);
+        turbopufferService.addDocumentsDirectly(documents);
+    }
+    
+    /**
+     * 异步添加文档
+     */
+    public void addDocumentsAsync(List<Document> documents) {
+        if (CollectionUtils.isEmpty(documents)) {
+            return;
+        }
+        documents = embedding.embedDocument(documents);
+        for (Document doc : documents) {
+            turbopufferService.addDocumentAsync(doc);
+        }
+    }
+    
+    /**
+     * 批量添加文档（使用批量处理器）
+     */
+    public void addDocumentsBatch(List<Document> documents) {
+        if (CollectionUtils.isEmpty(documents)) {
+            return;
+        }
+        documents = embedding.embedDocument(documents);
         turbopufferService.addDocuments(documents);
     }
 
@@ -106,7 +132,7 @@ public class Turbopuffer extends VectorStore {
             return Lists.newArrayList();
         }
         List<Double> queryEmbedding = JSON.parseArray(embeddingStrings.get(0), Double.class);
-        return turbopufferService.similaritySearch(queryEmbedding, k, maxDistanceValue);
+        return turbopufferService.similaritySearchWithRetry(queryEmbedding, k, maxDistanceValue);
     }
 
     @Override
@@ -132,6 +158,27 @@ public class Turbopuffer extends VectorStore {
      */
     public void deleteNamespace() {
         turbopufferService.deleteNamespace();
+    }
+
+    /**
+     * 强制刷新批量队列
+     */
+    public void flushBatch() {
+        turbopufferService.flushBatch();
+    }
+    
+    /**
+     * 获取性能统计信息
+     */
+    public Map<String, Object> getMetrics() {
+        return turbopufferService.getMetrics();
+    }
+    
+    /**
+     * 重置性能指标
+     */
+    public void resetMetrics() {
+        turbopufferService.resetMetrics();
     }
 
     /**
