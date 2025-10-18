@@ -91,6 +91,7 @@
 		<module>ali-langengine-community/ali-langengine-ngt</module>
 		<module>ali-langengine-community/ali-langengine-proxima</module>
 		<module>ali-langengine-community/ali-langengine-txtai</module>
+		<module>ali-langengine-community/ali-langengine-turbopuffer</module>
 		<module>ali-langengine-community/ali-langengine-typesense</module>
 		<module>ali-langengine-community/ali-langengine-vald</module>
 		<module>ali-langengine-community/ali-langengine-tuargpg</module>
