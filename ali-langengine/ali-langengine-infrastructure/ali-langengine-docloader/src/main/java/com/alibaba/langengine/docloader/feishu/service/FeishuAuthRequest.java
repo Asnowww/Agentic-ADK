@@ -13,29 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.alibaba.langengine.docloader.yuque.service;
+package com.alibaba.langengine.docloader.feishu.service;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 /**
- * 语雀响应结果
+ * 飞书认证请求
  *
- * @author xiaoxuan.lp
+ * @author Libres-coder
  */
 @Data
-public class YuqueResult<T> {
+@NoArgsConstructor
+@AllArgsConstructor
+public class FeishuAuthRequest {
 
-    private T data;
+    @JsonProperty("app_id")
+    private String appId;
 
-
-    private YuqueMeta meta;
-
-    @Data
-    public static class YuqueMeta {
-
-        /**
-         * 总共多少条文档
-         */
-        private Integer total;
-    }
+    @JsonProperty("app_secret")
+    private String appSecret;
 }

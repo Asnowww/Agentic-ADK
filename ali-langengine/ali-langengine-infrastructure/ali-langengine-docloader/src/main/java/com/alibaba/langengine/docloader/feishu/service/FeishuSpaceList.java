@@ -13,29 +13,42 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.alibaba.langengine.docloader.yuque.service;
+package com.alibaba.langengine.docloader.feishu.service;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 
+import java.util.List;
+
 /**
- * 语雀响应结果
+ * 飞书知识库列表
  *
- * @author xiaoxuan.lp
+ * @author Libres-coder
  */
 @Data
-public class YuqueResult<T> {
+public class FeishuSpaceList {
 
-    private T data;
+    private List<Space> items;
 
+    @JsonProperty("page_token")
+    private String pageToken;
 
-    private YuqueMeta meta;
+    @JsonProperty("has_more")
+    private Boolean hasMore;
 
     @Data
-    public static class YuqueMeta {
+    public static class Space {
 
-        /**
-         * 总共多少条文档
-         */
-        private Integer total;
+        @JsonProperty("space_id")
+        private String spaceId;
+
+        private String name;
+
+        private String description;
+
+        @JsonProperty("space_type")
+        private String spaceType;
+
+        private String visibility;
     }
 }

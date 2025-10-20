@@ -13,29 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.alibaba.langengine.docloader.yuque.service;
+package com.alibaba.langengine.docloader.dingtalk.service;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 
 /**
- * 语雀响应结果
+ * 钉钉访问令牌
  *
- * @author xiaoxuan.lp
+ * @author Libres-coder
  */
 @Data
-public class YuqueResult<T> {
+public class DingTalkAccessToken {
 
-    private T data;
+    @JsonProperty("access_token")
+    private String accessToken;
 
-
-    private YuqueMeta meta;
-
-    @Data
-    public static class YuqueMeta {
-
-        /**
-         * 总共多少条文档
-         */
-        private Integer total;
-    }
+    @JsonProperty("expires_in")
+    private Integer expiresIn;
 }

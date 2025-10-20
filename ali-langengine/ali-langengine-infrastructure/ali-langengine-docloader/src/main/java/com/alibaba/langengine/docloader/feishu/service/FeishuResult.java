@@ -13,29 +13,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.alibaba.langengine.docloader.yuque.service;
+package com.alibaba.langengine.docloader.feishu.service;
 
 import lombok.Data;
 
 /**
- * 语雀响应结果
+ * 飞书响应结果
  *
- * @author xiaoxuan.lp
+ * @author Libres-coder
  */
 @Data
-public class YuqueResult<T> {
+public class FeishuResult<T> {
 
+    /**
+     * 状态码，0表示成功
+     */
+    private Integer code;
+
+    /**
+     * 错误信息
+     */
+    private String msg;
+
+    /**
+     * 响应数据
+     */
     private T data;
-
-
-    private YuqueMeta meta;
-
-    @Data
-    public static class YuqueMeta {
-
-        /**
-         * 总共多少条文档
-         */
-        private Integer total;
-    }
 }

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.alibaba.langengine.docloader.yuque.service;
+package com.alibaba.langengine.docloader.feishu.service;
 
 import okhttp3.Interceptor;
 import okhttp3.Request;
@@ -21,27 +21,31 @@ import okhttp3.Response;
 
 import java.io.IOException;
 import java.util.Objects;
+import java.util.function.Supplier;
 
 /**
- * OkHttp Interceptor that adds an authorization token header
+ * 飞书API认证拦截器
  *
- * @author xiaoxuan.lp
+ * @author Libres-coder
  */
-public class AuthenticationInterceptor implements Interceptor {
+public class FeishuAuthenticationInterceptor implements Interceptor {
 
-    private final String token;
+    private final Supplier<String> tokenSupplier;
 
-    AuthenticationInterceptor(String token) {
-        Objects.requireNonNull(token, "FastChat token required");
-        this.token = token;
+    public FeishuAuthenticationInterceptor(Supplier<String> tokenSupplier) {
+        Objects.requireNonNull(tokenSupplier, "Token supplier required");
+        this.tokenSupplier = tokenSupplier;
     }
 
     @Override
     public Response intercept(Chain chain) throws IOException {
+        // 获取当前的访问令牌
+        String token = tokenSupplier.get();
+        
         Request request = chain.request()
                 .newBuilder()
-                .header("User-Agent", "top")
-                .header("X-Auth-Token", token)
+                .header("Authorization", "Bearer " + token)
+                .header("Content-Type", "application/json; charset=utf-8")
                 .build();
         return chain.proceed(request);
     }

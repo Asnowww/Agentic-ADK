@@ -13,29 +13,38 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.alibaba.langengine.docloader.yuque.service;
+package com.alibaba.langengine.docloader.feishu.service;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 
+import java.util.List;
+import java.util.Map;
+
 /**
- * 语雀响应结果
+ * 飞书文档块内容（旧版文档API）
  *
- * @author xiaoxuan.lp
+ * @author Libres-coder
  */
 @Data
-public class YuqueResult<T> {
+public class FeishuDocBlocks {
 
-    private T data;
-
-
-    private YuqueMeta meta;
+    private List<Block> blocks;
 
     @Data
-    public static class YuqueMeta {
+    public static class Block {
 
-        /**
-         * 总共多少条文档
-         */
-        private Integer total;
+        @JsonProperty("block_id")
+        private String blockId;
+
+        @JsonProperty("block_type")
+        private Integer blockType;
+
+        @JsonProperty("parent_id")
+        private String parentId;
+
+        private Map<String, Object> text;
+
+        private List<String> children;
     }
 }

@@ -533,7 +533,7 @@ public class TempMemory extends BaseMemory {
         Map<String, Long> categoryDistribution = categoryIndex.entrySet().stream()
             .collect(Collectors.toMap(
                 Map.Entry::getKey,
-                entry -> entry.getValue().size()
+                entry -> (long) entry.getValue().size()
             ));
         stats.put("category_distribution", categoryDistribution);
 
