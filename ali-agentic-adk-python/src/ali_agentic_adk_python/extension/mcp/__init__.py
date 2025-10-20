@@ -43,6 +43,7 @@ from .connection import (
     McpRefreshError,
     McpSessionError,
     McpSessionManager,
+    McpConnectionNotFoundError,
     McpToolNotFoundError,
 )
 from .tool import McpTool
@@ -54,6 +55,7 @@ __all__ = [
     "McpStdioServerConfig",
     "McpSessionError",
     "McpRefreshError",
+    "McpConnectionNotFoundError",
     "McpToolNotFoundError",
     "McpSessionManager",
     "McpTool",

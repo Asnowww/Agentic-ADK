@@ -60,6 +60,14 @@ class McpRefreshError(McpSessionError):
         super().__init__(f"Failed to refresh MCP tool metadata for {details or 'unknown servers'}.")
 
 
+class McpConnectionNotFoundError(McpSessionError):
+    """Raised when the requested MCP connection cannot be located."""
+
+    def __init__(self, connection_id: str) -> None:
+        self.connection_id = connection_id
+        super().__init__(f"Unknown MCP connection '{connection_id}'.")
+
+
 class McpConnection:
     """manage the lifecycle of a single MCP server connection."""
     def __init__(self, config: McpServerConfig) -> None:
@@ -325,6 +333,60 @@ class McpSessionManager:
                 continue
             matches.append(descriptor)
         return matches
+
+    async def refresh_connection(
+        self,
+        connection_id: str,
+        *,
+        ensure_started: bool = True,
+    ) -> Dict[str, mcp_types.Tool]:
+        if ensure_started:
+            await self.ensure_started()
+
+        async with self._lock:
+            connection = self.get_connection(connection_id)
+            if connection is None:
+                raise McpConnectionNotFoundError(connection_id)
+            await connection.refresh_tools()
+            self._rebuild_registry()
+            return connection.tools
+
+    async def wait_for_tool(
+        self,
+        exposed_name: str,
+        *,
+        timeout: float | None = 5.0,
+        refresh_interval: float = 0.25,
+        ensure_started: bool = True,
+    ) -> McpToolDescriptor:
+        if refresh_interval <= 0:
+            raise ValueError("refresh_interval must be a positive value.")
+
+        if ensure_started:
+            await self.ensure_started()
+
+        loop = asyncio.get_running_loop()
+        deadline = loop.time() + timeout if timeout is not None else None
+
+        def _lookup() -> McpToolDescriptor | None:
+            return self._tool_registry.get(exposed_name)
+
+        descriptor = _lookup()
+        if descriptor:
+            return descriptor
+
+        while True:
+            await self.refresh(ensure_started=False)
+            descriptor = _lookup()
+            if descriptor:
+                return descriptor
+
+            if deadline is not None and loop.time() >= deadline:
+                raise McpToolNotFoundError(exposed_name, self._tool_registry.keys())
+
+            await asyncio.sleep(refresh_interval)
+            if deadline is not None and loop.time() >= deadline:
+                raise McpToolNotFoundError(exposed_name, self._tool_registry.keys())
 
     async def remove_server(self, connection_id: str, *, close_connection: bool = True) -> bool:
         async with self._lock:

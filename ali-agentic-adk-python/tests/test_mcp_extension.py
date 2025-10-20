@@ -5,6 +5,7 @@ import pytest
 from mcp import types as mcp_types
 
 from ali_agentic_adk_python.extension.mcp import (
+    McpConnectionNotFoundError,
     McpRefreshError,
     McpSessionManager,
     McpToolNotFoundError,
@@ -58,6 +59,7 @@ class _AsyncStubConnection:
         server_name: str = 'stub',
         call_result: mcp_types.CallToolResult | None = None,
         refresh_side_effect: Exception | None = None,
+        refresh_plan: list[dict[str, mcp_types.Tool]] | None = None,
     ) -> None:
         self._namespace = namespace
         self._tools = dict(tools)
@@ -70,6 +72,7 @@ class _AsyncStubConnection:
             isError=False,
         )
         self._refresh_side_effect = refresh_side_effect
+        self._refresh_plan = [dict(plan) for plan in refresh_plan] if refresh_plan else []
         self.connect_calls = 0
         self.close_calls = 0
         self.refresh_calls = 0
@@ -100,6 +103,8 @@ class _AsyncStubConnection:
         self.refresh_calls += 1
         if self._refresh_side_effect is not None:
             raise self._refresh_side_effect
+        if self._refresh_plan:
+            self._tools = dict(self._refresh_plan.pop(0))
         return self.tools
 
     async def call_tool(self, tool_name: str, args: dict[str, object]) -> mcp_types.CallToolResult:
@@ -334,3 +339,77 @@ async def test_mcp_session_manager_remove_server_returns_false_for_unknown_id():
     result = await manager.remove_server("missing-id")
 
     assert result is False
+
+
+@pytest.mark.anyio("asyncio")
+async def test_mcp_session_manager_refresh_connection_rebuilds_registry():
+    ping_tool = mcp_types.Tool(name="ping", inputSchema={"type": "object", "properties": {}})
+    pong_tool = mcp_types.Tool(name="pong", inputSchema={"type": "object", "properties": {}})
+    connection = _AsyncStubConnection(
+        namespace="alpha",
+        tools={"ping": ping_tool},
+        refresh_plan=[{"ping": ping_tool, "pong": pong_tool}],
+    )
+    manager = McpSessionManager([])
+    manager._connections = [connection]
+
+    await manager.start()
+    assert "alpha.pong" not in manager.tool_names
+
+    tools = await manager.refresh_connection(connection.connection_id)
+
+    assert "pong" in tools
+    assert "alpha.pong" in manager.tool_names
+
+
+@pytest.mark.anyio("asyncio")
+async def test_mcp_session_manager_refresh_connection_unknown_id():
+    manager = McpSessionManager([])
+
+    await manager.start()
+
+    with pytest.raises(McpConnectionNotFoundError):
+        await manager.refresh_connection("missing")
+
+
+@pytest.mark.anyio("asyncio")
+async def test_mcp_session_manager_wait_for_tool_eventually_succeeds():
+    ping_tool = mcp_types.Tool(name="ping", inputSchema={"type": "object", "properties": {}})
+    connection = _AsyncStubConnection(
+        namespace="alpha",
+        tools={},
+        refresh_plan=[{}, {"ping": ping_tool}],
+    )
+    manager = McpSessionManager([])
+    manager._connections = [connection]
+
+    await manager.start()
+
+    descriptor = await manager.wait_for_tool("alpha.ping", timeout=1.0, refresh_interval=0.05)
+
+    assert descriptor.original_name == "ping"
+    assert connection.refresh_calls >= 2
+
+
+@pytest.mark.anyio("asyncio")
+async def test_mcp_session_manager_wait_for_tool_times_out():
+    connection = _AsyncStubConnection(namespace="alpha", tools={})
+    manager = McpSessionManager([])
+    manager._connections = [connection]
+
+    await manager.start()
+
+    with pytest.raises(McpToolNotFoundError):
+        await manager.wait_for_tool("alpha.ping", timeout=0.2, refresh_interval=0.05)
+
+
+@pytest.mark.anyio("asyncio")
+async def test_mcp_session_manager_wait_for_tool_validates_interval():
+    connection = _AsyncStubConnection(namespace="alpha", tools={})
+    manager = McpSessionManager([])
+    manager._connections = [connection]
+
+    await manager.start()
+
+    with pytest.raises(ValueError):
+        await manager.wait_for_tool("alpha.ping", refresh_interval=0)
