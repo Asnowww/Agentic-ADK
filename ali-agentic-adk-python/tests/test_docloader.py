@@ -4,18 +4,65 @@ import io
 import os
 import json
 from pathlib import Path
+from typing import Any, Dict, Iterable, Tuple
 
 import pytest
 from PyPDF2 import PdfWriter
 
 from ali_agentic_adk_python.core import (
     Document,
+    FeishuDocLoader,
     MarkdownDocLoader,
     PDFDocLoader,
     RecursiveCharacterTextSplitter,
     TextDocLoader,
 )
 
+
+class _StubHTTPResponse:
+    def __init__(self, payload: Any):
+        if isinstance(payload, tuple):
+            body, status = payload
+        else:
+            body, status = payload, 200
+        self._body = body
+        self.status_code = status
+
+    def json(self) -> Any:
+        return self._body
+
+    def raise_for_status(self) -> None:
+        if self.status_code >= 400:
+            raise RuntimeError(f"HTTP {self.status_code}")
+
+
+class _StubSession:
+    def __init__(self, responses: Dict[Tuple[str, str], Iterable[Any]]):
+        self._responses: Dict[Tuple[str, str], Iterable[Any]] = {}
+        for key, value in responses.items():
+            if isinstance(value, list):
+                self._responses[key] = iter(value)
+            else:
+                self._responses[key] = iter([value])
+        self.calls: list[Tuple[str, str, Dict[str, Any]]] = []
+
+    def request(self, method: str, url: str, **kwargs: Any) -> _StubHTTPResponse:
+        key = (method.upper(), url)
+        if key not in self._responses:
+            raise AssertionError(f"Unexpected request: {key}")
+        self.calls.append((method.upper(), url, kwargs))
+        iterator = self._responses[key]
+        try:
+            payload = next(iterator)
+        except StopIteration:
+            raise AssertionError(f"No more responses configured for {key}")
+        return _StubHTTPResponse(payload)
+
+    def get(self, url: str, **kwargs: Any) -> _StubHTTPResponse:
+        return self.request("GET", url, **kwargs)
+
+    def post(self, url: str, **kwargs: Any) -> _StubHTTPResponse:
+        return self.request("POST", url, **kwargs)
 
 # ============================================================================
 # TextDocLoader 基础测试
@@ -589,6 +636,114 @@ def test_markdown_doc_loader_requires_source():
     loader = MarkdownDocLoader()
     with pytest.raises(ValueError):
         loader.load()
+
+
+# ============================================================================
+# FeishuDocLoader 基础测试
+# ============================================================================
+
+def test_feishu_doc_loader_single_document():
+    domain = "https://open.feishu.cn"
+    responses = {
+        (
+            "POST",
+            f"{domain}/open-apis/auth/v3/tenant_access_token/internal",
+        ): {"code": 0, "tenant_access_token": "token", "expire": 7200},
+        (
+            "GET",
+            f"{domain}/open-apis/docx/v1/documents/doc123/raw_content",
+        ): {"code": 0, "data": {"content": "Hello Feishu", "title": "Feishu Doc"}},
+    }
+    session = _StubSession(responses)
+
+    loader = FeishuDocLoader("app", "secret", session=session)
+    loader.doc_token = "doc123"
+
+    documents = loader.load()
+
+    assert len(documents) == 1
+    doc = documents[0]
+    assert doc.page_content == "Hello Feishu"
+    assert doc.metadata["doc_token"] == "doc123"
+    assert doc.metadata["title"] == "Feishu Doc"
+    assert doc.metadata["source"].endswith("doc123")
+
+
+def test_feishu_doc_loader_space_documents():
+    domain = "https://open.feishu.cn"
+    responses = {
+        (
+            "POST",
+            f"{domain}/open-apis/auth/v3/tenant_access_token/internal",
+        ): {"code": 0, "tenant_access_token": "token", "expire": 7200},
+        (
+            "GET",
+            f"{domain}/open-apis/drive/v1/spaces/space123/nodes",
+        ): {
+            "code": 0,
+            "data": {
+                "items": [
+                    {
+                        "obj_type": "docx",
+                        "obj_token": "docA",
+                        "node_token": "nodeA",
+                        "title": "Doc A",
+                    },
+                    {
+                        "obj_type": "sheet",
+                        "obj_token": "sheet1",
+                    },
+                ],
+                "has_more": False,
+            },
+        },
+        (
+            "GET",
+            f"{domain}/open-apis/docx/v1/documents/docA/raw_content",
+        ): {"code": 0, "data": {"content": "Content A"}},
+    }
+    session = _StubSession(responses)
+
+    loader = FeishuDocLoader("app", "secret", session=session)
+    loader.space_id = "space123"
+    loader.page_size = 20
+
+    documents = loader.load()
+
+    assert len(documents) == 1
+    doc = documents[0]
+    assert doc.page_content == "Content A"
+    assert doc.metadata["space_id"] == "space123"
+    assert doc.metadata["node_token"] == "nodeA"
+    assert doc.metadata["doc_type"] == "docx"
+
+
+def test_feishu_doc_loader_fetch_content_merges_metadata():
+    domain = "https://open.feishu.cn"
+    responses = {
+        (
+            "POST",
+            f"{domain}/open-apis/auth/v3/tenant_access_token/internal",
+        ): {"code": 0, "tenant_access_token": "token", "expire": 7200},
+        (
+            "GET",
+            f"{domain}/open-apis/docx/v1/documents/doc-meta/raw_content",
+        ): {"code": 0, "data": {"content": "Meta doc"}},
+    }
+    session = _StubSession(responses)
+
+    loader = FeishuDocLoader("app", "secret", session=session)
+    documents = loader.fetch_content(
+        {"doc_token": "doc-meta", "metadata": {"category": "feishu"}}
+    )
+
+    assert documents[0].metadata["category"] == "feishu"
+    assert documents[0].metadata["doc_token"] == "doc-meta"
+
+
+def test_feishu_doc_loader_requires_target():
+    loader = FeishuDocLoader("app", "secret")
+    assert loader.load() == []
 
 
 # ============================================================================
