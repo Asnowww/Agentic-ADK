@@ -36,6 +36,7 @@ from .doubao_embedding import DoubaoEmbedding
 from .anthropic_embedding import AnthropicEmbedding
 from .deepseek_embedding import DeepSeekEmbedding
 from .tencent_embedding import TencentEmbedding
+from .replicate_embedding import ReplicateEmbedding
 from .fireworks_embedding import FireworksEmbedding
 from .together_embedding import TogetherEmbedding
 from .voyage_embedding import VoyageEmbedding
@@ -65,6 +66,7 @@ __all__ = [
     "AnthropicEmbedding",
     "DeepSeekEmbedding",
     "TencentEmbedding",
+    "ReplicateEmbedding",
     "FireworksEmbedding",
     "TogetherEmbedding",
     "VoyageEmbedding",
