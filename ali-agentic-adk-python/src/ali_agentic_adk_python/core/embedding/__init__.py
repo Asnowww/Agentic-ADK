@@ -42,6 +42,7 @@ from .yi_embedding import YiEmbedding
 from .sensenova_embedding import SenseNovaEmbedding
 from .siliconflow_embedding import SiliconFlowEmbedding
 from .ollama_embedding import OllamaEmbedding
+from .nomic_embedding import NomicEmbedding
 
 
 __all__ = [
@@ -68,4 +69,5 @@ __all__ = [
     "SenseNovaEmbedding",
     "SiliconFlowEmbedding",
     "OllamaEmbedding",
+    "NomicEmbedding",
 ]
