@@ -9,7 +9,7 @@ import asyncio
 import logging
 from collections.abc import Iterable, Sequence
 from contextlib import AsyncExitStack
-from typing import Dict
+from typing import Any, Dict, Tuple
 
 from mcp import types as mcp_types
 from mcp.client.session import ClientSession
@@ -24,6 +24,39 @@ from .config import (
 from .tool import McpToolDescriptor
 
 logger = logging.getLogger(__name__)
+
+
+class McpSessionError(RuntimeError):
+    """Base exception for MCP session manager failures."""
+
+
+class McpToolNotFoundError(McpSessionError, KeyError):
+    """Raised when the requested MCP tool is not registered."""
+
+    def __init__(self, tool_name: str, available: Iterable[str]) -> None:
+        self.tool_name = tool_name
+        self.available_names = tuple(sorted(available))
+        available_hint = (
+            f" Available tools: {', '.join(self.available_names)}."
+            if self.available_names
+            else " No tools are currently registered."
+        )
+        message = f"Unknown MCP tool '{tool_name}'.{available_hint}"
+        McpSessionError.__init__(self, message)
+        KeyError.__init__(self, tool_name)
+
+
+class McpRefreshError(McpSessionError):
+    """Raised when one or more servers fail to refresh their tool metadata."""
+
+    def __init__(self, failures: Sequence[Tuple['McpConnection', BaseException]]) -> None:
+        self.failures = tuple(failures)
+        details = ", ".join(
+            f"{failure[0].namespace or (failure[0].server_info.name if failure[0].server_info else '<anonymous>')}: "
+            f"{type(failure[1]).__name__}"
+            for failure in self.failures
+        )
+        super().__init__(f"Failed to refresh MCP tool metadata for {details or 'unknown servers'}.")
 
 
 class McpConnection:
@@ -94,6 +127,7 @@ class McpConnection:
         if self._stack_entered:
             await self._stack.aclose()
             self._stack_entered = False
+        self._stack = AsyncExitStack()
         self._session = None
         self._server_info = None
         self._tools = {}
@@ -163,6 +197,13 @@ class McpSessionManager:
         if auto_connect:
             asyncio.get_event_loop().create_task(self.start())
 
+    async def __aenter__(self) -> 'McpSessionManager':
+        await self.start()
+        return self
+
+    async def __aexit__(self, exc_type, exc, tb) -> None:
+        await self.stop()
+
     async def start(self) -> None:
         async with self._lock:
             if self._started:
@@ -191,11 +232,76 @@ class McpSessionManager:
     def descriptors(self) -> Dict[str, McpToolDescriptor]:
         return dict(self._tool_registry)
 
-    async def refresh(self) -> None:
+    @property
+    def tool_names(self) -> list[str]:
+        return list(self._tool_registry.keys())
+
+    def describe_tools(self) -> list[dict[str, Any]]:
+        if not self._started:
+            raise McpSessionError("MCP session manager must be started before describing tools.")
+
+        descriptions: list[dict[str, Any]] = []
+        for descriptor in self._tool_registry.values():
+            tool = descriptor.tool
+            entry = {
+                'name': descriptor.exposed_name,
+                'original_name': descriptor.original_name,
+                'namespace': descriptor.connection.namespace,
+                'description': tool.description,
+            }
+            if descriptor.server_info:
+                entry['server_name'] = descriptor.server_info.name
+                entry['server_version'] = descriptor.server_info.version
+            annotations = getattr(tool, 'annotations', None)
+            if annotations and getattr(annotations, 'title', None):
+                entry['title'] = annotations.title
+            descriptions.append({k: v for k, v in entry.items() if v is not None})
+
+        return descriptions
+
+    def get_descriptor(self, exposed_name: str) -> McpToolDescriptor:
+        try:
+            return self._tool_registry[exposed_name]
+        except KeyError as exc:
+            raise McpToolNotFoundError(exposed_name, self._tool_registry.keys()) from exc
+
+    async def invoke_tool(
+        self,
+        exposed_name: str,
+        args: dict[str, object] | None = None,
+        *,
+        ensure_started: bool = True,
+    ) -> mcp_types.CallToolResult:
+        if ensure_started:
+            await self.ensure_started()
+
+        descriptor = self.get_descriptor(exposed_name)
+        payload = args or {}
+        if not isinstance(payload, dict):
+            raise TypeError('args must be a dictionary of parameters')
+        return await descriptor.connection.call_tool(descriptor.original_name, payload)
+
+    async def refresh(self, *, ensure_started: bool = True) -> None:
         """Refresh tool metadata across all connected servers."""
+        if ensure_started:
+            await self.ensure_started()
+
         async with self._lock:
-            for connection in self._connections:
-                await connection.refresh_tools()
+            results = await asyncio.gather(
+                *[connection.refresh_tools() for connection in self._connections],
+                return_exceptions=True,
+            )
+            failures: list[Tuple[McpConnection, BaseException]] = []
+            for connection, result in zip(self._connections, results):
+                if isinstance(result, BaseException):
+                    logger.exception(
+                        "Failed to refresh tools for MCP server %s",
+                        connection.namespace or "<anonymous>",
+                        exc_info=result,
+                    )
+                    failures.append((connection, result))
+            if failures:
+                raise McpRefreshError(failures)
             self._rebuild_registry()
 
     def add_server(self, config: McpServerConfig) -> None:
@@ -204,6 +310,9 @@ class McpSessionManager:
         self._started = False
 
     def build_google_adk_tools(self) -> list["McpTool"]:
+        if not self._started:
+            raise McpSessionError("MCP session manager must be started before building BaseTool wrappers.")
+
         from .tool import McpTool
 
         return [McpTool(descriptor) for descriptor in self._tool_registry.values()]
