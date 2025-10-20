@@ -23,5 +23,13 @@ from .feishu_loader import FeishuDocLoader
 from .markdown_loader import MarkdownDocLoader
 from .pdf_loader import PDFDocLoader
 from .text_loader import TextDocLoader
+from .word_loader import WordDocLoader
 
-__all__ = ["BaseLoader", "FeishuDocLoader", "MarkdownDocLoader", "PDFDocLoader", "TextDocLoader"]
+__all__ = [
+    "BaseLoader",
+    "FeishuDocLoader",
+    "MarkdownDocLoader",
+    "PDFDocLoader",
+    "TextDocLoader",
+    "WordDocLoader",
+]

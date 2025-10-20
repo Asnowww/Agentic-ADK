@@ -8,6 +8,7 @@ from typing import Any, Dict, Iterable, Tuple
 
 import pytest
 from PyPDF2 import PdfWriter
+from docx import Document as WordDocument
 
 from ali_agentic_adk_python.core import (
     Document,
@@ -16,6 +17,7 @@ from ali_agentic_adk_python.core import (
     PDFDocLoader,
     RecursiveCharacterTextSplitter,
     TextDocLoader,
+    WordDocLoader,
 )
 
 
@@ -634,6 +636,49 @@ def test_markdown_doc_loader_without_front_matter(tmp_path):
 
 def test_markdown_doc_loader_requires_source():
     loader = MarkdownDocLoader()
+    with pytest.raises(ValueError):
+        loader.load()
+
+
+# ============================================================================
+# WordDocLoader 基础测试
+# ============================================================================
+
+def _create_docx(path: Path, paragraphs: Iterable[str]) -> None:
+    doc = WordDocument()
+    for paragraph in paragraphs:
+        doc.add_paragraph(paragraph)
+    doc.save(path)
+
+
+def test_word_doc_loader_reads_file(tmp_path):
+    docx_path = tmp_path / "sample.docx"
+    _create_docx(docx_path, ["Hello", "World"])
+
+    loader = WordDocLoader(str(docx_path))
+    documents = loader.load()
+
+    assert len(documents) == 1
+    assert "Hello" in documents[0].page_content
+    assert "World" in documents[0].page_content
+    assert documents[0].metadata["source"] == str(docx_path)
+
+
+def test_word_doc_loader_fetches_from_bytes(tmp_path):
+    docx_path = tmp_path / "bytes.docx"
+    _create_docx(docx_path, ["From", "Bytes"])
+
+    payload = docx_path.read_bytes()
+    loader = WordDocLoader()
+    documents = loader.fetch_content({"bytes": payload, "metadata": {"category": "docx"}})
+
+    assert documents[0].metadata["source"] == "stream"
+    assert documents[0].metadata["category"] == "docx"
+    assert "From" in documents[0].page_content
+
+
+def test_word_doc_loader_requires_source():
+    loader = WordDocLoader()
     with pytest.raises(ValueError):
         loader.load()
 

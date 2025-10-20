@@ -25,6 +25,7 @@ from .docloader import (
     MarkdownDocLoader,
     PDFDocLoader,
     TextDocLoader,
+    WordDocLoader,
 )
 from .indexes import Document
 from .text_splitter import RecursiveCharacterTextSplitter, TextSplitter
@@ -38,4 +39,5 @@ __all__ = [
     "RecursiveCharacterTextSplitter",
     "TextDocLoader",
     "TextSplitter",
+    "WordDocLoader",
 ]
