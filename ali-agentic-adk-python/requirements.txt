@@ -7,6 +7,8 @@ openai
 boto3
 cohere
 mcp>=1.15.0
+requests
+tencentcloud-sdk-python
 
 # Alibaba Cloud SDKs
 alibabacloud_ecd20200930
