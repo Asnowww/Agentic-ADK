@@ -10,8 +10,9 @@ from PyPDF2 import PdfWriter
 
 from ali_agentic_adk_python.core import (
     Document,
-    RecursiveCharacterTextSplitter,
+    MarkdownDocLoader,
     PDFDocLoader,
+    RecursiveCharacterTextSplitter,
     TextDocLoader,
 )
 
@@ -516,15 +517,78 @@ def test_splitter_preserves_metadata_across_chunks(tmp_path):
     path = tmp_path / "meta_test.txt"
     content = "alpha " * 50
     path.write_text(content, encoding="utf-8")
-    
+
     loader = TextDocLoader(str(path))
     splitter = RecursiveCharacterTextSplitter(max_chunk_size=30, max_chunk_overlap=5)
-    
+
     chunks = loader.load_and_split(splitter)
-    
+
     sources = {chunk.metadata.get("source") for chunk in chunks}
     assert len(sources) == 1
     assert str(path) in sources
+
+
+# ============================================================================
+# MarkdownDocLoader 基础测试
+# ============================================================================
+
+def test_markdown_doc_loader_parses_front_matter(tmp_path):
+    path = tmp_path / "frontmatter.md"
+    path.write_text(
+        "---\n"
+        "title: Sample Doc\n"
+        "tags:\n"
+        "  - ai\n"
+        "  - markdown\n"
+        "---\n\n"
+        "# Heading\n"
+        "Content here.\n",
+        encoding="utf-8",
+    )
+
+    loader = MarkdownDocLoader(str(path))
+    documents = loader.load()
+
+    assert len(documents) == 1
+    doc = documents[0]
+    assert doc.page_content.startswith("# Heading")
+    assert doc.metadata["source"] == str(path)
+    assert doc.metadata["front_matter"]["title"] == "Sample Doc"
+    assert doc.metadata["front_matter"]["tags"] == ["ai", "markdown"]
+
+
+def test_markdown_doc_loader_fetch_from_text():
+    loader = MarkdownDocLoader()
+    documents = loader.fetch_content(
+        {
+            "text": "---\ncategory: tests\n---\n\nHello",
+            "metadata": {"extra": True},
+        }
+    )
+
+    doc = documents[0]
+    assert doc.page_content.strip() == "Hello"
+    assert doc.metadata["front_matter"]["category"] == "tests"
+    assert doc.metadata["extra"] is True
+    assert doc.metadata["source"] == "inline"
+
+
+def test_markdown_doc_loader_without_front_matter(tmp_path):
+    path = tmp_path / "no_frontmatter.md"
+    content = "# Title\n\nPlain text"
+    path.write_text(content, encoding="utf-8")
+
+    loader = MarkdownDocLoader(str(path))
+    documents = loader.load()
+
+    assert documents[0].page_content == content
+    assert "front_matter" not in documents[0].metadata
+
+
+def test_markdown_doc_loader_requires_source():
+    loader = MarkdownDocLoader()
+    with pytest.raises(ValueError):
+        loader.load()
 
 
 # ============================================================================

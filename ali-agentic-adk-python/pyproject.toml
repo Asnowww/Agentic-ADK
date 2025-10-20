@@ -30,6 +30,7 @@ dependencies = [
     "requests",
     "tencentcloud-sdk-python",
     "PyPDF2",
+    "PyYAML",
 
     # Alibaba Cloud SDKs
     "alibabacloud_ecd20200930",
