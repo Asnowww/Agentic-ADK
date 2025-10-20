@@ -7,9 +7,10 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import uuid
 from collections.abc import Iterable, Sequence
 from contextlib import AsyncExitStack
-from typing import Any, Dict, Tuple
+from typing import Any, Callable, Dict, Tuple
 
 from mcp import types as mcp_types
 from mcp.client.session import ClientSession
@@ -70,10 +71,15 @@ class McpConnection:
         self._tools: Dict[str, mcp_types.Tool] = {}
         self._call_lock = asyncio.Lock()
         self._connected = False
+        self._connection_id = uuid.uuid4().hex
 
     @property
     def config(self) -> McpServerConfig:
         return self._config
+
+    @property
+    def connection_id(self) -> str:
+        return self._connection_id
 
     @property
     def server_info(self) -> mcp_types.Implementation | None:
@@ -95,6 +101,11 @@ class McpConnection:
     def tools(self) -> Dict[str, mcp_types.Tool]:
         """returns a copy of the currently known tools."""
         return dict(self._tools)
+
+    @property
+    def transport(self) -> str:
+        transport = self._config.transport
+        return getattr(transport, "value", str(transport))
 
     async def connect(self) -> None:
         """Establish the connection to the MCP server if not already connected."""
@@ -132,6 +143,28 @@ class McpConnection:
         self._server_info = None
         self._tools = {}
         self._connected = False
+
+    def describe(self) -> dict[str, Any]:
+        """Provide a diagnostic snapshot of the connection state."""
+        info: dict[str, Any] = {
+            "connection_id": self._connection_id,
+            "transport": self.transport,
+            "namespace": self.namespace,
+            "is_connected": self._connected,
+            "tool_count": len(self._tools),
+        }
+        if self._server_info:
+            info["server_name"] = self._server_info.name
+            info["server_version"] = self._server_info.version
+            if self._server_info.title:
+                info["server_title"] = self._server_info.title
+        if isinstance(self._config, McpStdioServerConfig):
+            info["command"] = self._config.command
+            if self._config.args:
+                info["args"] = list(self._config.args)
+        elif isinstance(self._config, McpSseServerConfig):
+            info["url"] = str(self._config.url)
+        return info
 
     async def refresh_tools(self) -> Dict[str, mcp_types.Tool]:
         """Fetch the latest tool metadata from the server"""
@@ -236,6 +269,10 @@ class McpSessionManager:
     def tool_names(self) -> list[str]:
         return list(self._tool_registry.keys())
 
+    @property
+    def connections(self) -> tuple[McpConnection, ...]:
+        return tuple(self._connections)
+
     def describe_tools(self) -> list[dict[str, Any]]:
         if not self._started:
             raise McpSessionError("MCP session manager must be started before describing tools.")
@@ -264,6 +301,51 @@ class McpSessionManager:
             return self._tool_registry[exposed_name]
         except KeyError as exc:
             raise McpToolNotFoundError(exposed_name, self._tool_registry.keys()) from exc
+
+    def get_connection(self, connection_id: str) -> McpConnection | None:
+        for connection in self._connections:
+            if connection.connection_id == connection_id:
+                return connection
+        return None
+
+    def list_server_status(self) -> list[dict[str, Any]]:
+        return [connection.describe() for connection in self._connections]
+
+    def find_tools(
+        self,
+        *,
+        namespace: str | None = None,
+        predicate: Callable[[McpToolDescriptor], bool] | None = None,
+    ) -> list[McpToolDescriptor]:
+        matches: list[McpToolDescriptor] = []
+        for descriptor in self._tool_registry.values():
+            if namespace is not None and descriptor.connection.namespace != namespace:
+                continue
+            if predicate and not predicate(descriptor):
+                continue
+            matches.append(descriptor)
+        return matches
+
+    async def remove_server(self, connection_id: str, *, close_connection: bool = True) -> bool:
+        async with self._lock:
+            for index, connection in enumerate(self._connections):
+                if connection.connection_id != connection_id:
+                    continue
+
+                if close_connection:
+                    try:
+                        await connection.close()
+                    except Exception:
+                        logger.exception(
+                            "Failed to close MCP connection %s during removal.",
+                            connection_id,
+                        )
+                self._connections.pop(index)
+                self._rebuild_registry()
+                if not self._connections:
+                    self._started = False
+                return True
+        return False
 
     async def invoke_tool(
         self,

@@ -1,3 +1,4 @@
+import uuid
 from unittest.mock import MagicMock
 
 import pytest
@@ -52,6 +53,8 @@ class _AsyncStubConnection:
         namespace: str | None,
         tools: dict[str, mcp_types.Tool],
         *,
+        connection_id: str | None = None,
+        transport: str = 'stdio',
         server_name: str = 'stub',
         call_result: mcp_types.CallToolResult | None = None,
         refresh_side_effect: Exception | None = None,
@@ -59,6 +62,8 @@ class _AsyncStubConnection:
         self._namespace = namespace
         self._tools = dict(tools)
         self.server_info = mcp_types.Implementation(name=server_name, version='1.0.0')
+        self.connection_id = connection_id or uuid.uuid4().hex
+        self._transport = transport
         self._call_result = call_result or mcp_types.CallToolResult(
             content=[],
             structuredContent=None,
@@ -69,6 +74,7 @@ class _AsyncStubConnection:
         self.close_calls = 0
         self.refresh_calls = 0
         self.called_with: tuple[str, dict[str, object]] | None = None
+        self._connected = False
 
     @property
     def namespace(self) -> str | None:
@@ -78,11 +84,17 @@ class _AsyncStubConnection:
     def tools(self) -> dict[str, mcp_types.Tool]:
         return dict(self._tools)
 
+    @property
+    def transport(self) -> str:
+        return self._transport
+
     async def connect(self) -> None:
         self.connect_calls += 1
+        self._connected = True
 
     async def close(self) -> None:
         self.close_calls += 1
+        self._connected = False
 
     async def refresh_tools(self) -> dict[str, mcp_types.Tool]:
         self.refresh_calls += 1
@@ -93,6 +105,16 @@ class _AsyncStubConnection:
     async def call_tool(self, tool_name: str, args: dict[str, object]) -> mcp_types.CallToolResult:
         self.called_with = (tool_name, args)
         return self._call_result
+
+    def describe(self) -> dict[str, object]:
+        return {
+            "connection_id": self.connection_id,
+            "transport": self._transport,
+            "namespace": self._namespace,
+            "is_connected": self._connected,
+            "server_name": self.server_info.name,
+            "tool_count": len(self._tools),
+        }
 
 
 @pytest.mark.anyio("asyncio")
@@ -232,3 +254,83 @@ async def test_mcp_session_manager_refresh_ensures_started():
     assert connection.connect_calls == 1
     assert connection.refresh_calls == 1
     assert manager.tool_names == ["ping"]
+
+
+def test_mcp_session_manager_connections_property_exposes_stubs():
+    tool = mcp_types.Tool(name="ping", inputSchema={"type": "object", "properties": {}})
+    connection = _AsyncStubConnection(namespace=None, tools={"ping": tool})
+    manager = McpSessionManager([])
+    manager._connections = [connection]
+
+    (listed,) = manager.connections
+
+    assert listed.connection_id == connection.connection_id
+
+
+def test_mcp_session_manager_get_connection_finds_by_identifier():
+    tool = mcp_types.Tool(name="ping", inputSchema={"type": "object", "properties": {}})
+    connection = _AsyncStubConnection(namespace=None, tools={"ping": tool})
+    manager = McpSessionManager([])
+    manager._connections = [connection]
+
+    assert manager.get_connection(connection.connection_id) is connection
+    assert manager.get_connection("missing") is None
+
+
+@pytest.mark.anyio("asyncio")
+async def test_mcp_session_manager_list_server_status_includes_metadata():
+    tool = mcp_types.Tool(name="ping", inputSchema={"type": "object", "properties": {}})
+    connection = _AsyncStubConnection(namespace="alpha", tools={"ping": tool}, transport="sse")
+    manager = McpSessionManager([])
+    manager._connections = [connection]
+
+    await manager.start()
+    status = manager.list_server_status()
+
+    assert status[0]["connection_id"] == connection.connection_id
+    assert status[0]["transport"] == "sse"
+    assert status[0]["namespace"] == "alpha"
+    assert status[0]["tool_count"] == 1
+    assert status[0]["is_connected"] is True
+
+
+@pytest.mark.anyio("asyncio")
+async def test_mcp_session_manager_find_tools_filters_by_namespace_and_predicate():
+    ping_tool = mcp_types.Tool(name="ping", inputSchema={"type": "object", "properties": {}})
+    pong_tool = mcp_types.Tool(name="pong", inputSchema={"type": "object", "properties": {}})
+    conn_alpha = _AsyncStubConnection(namespace="alpha", tools={"ping": ping_tool})
+    conn_beta = _AsyncStubConnection(namespace="beta", tools={"pong": pong_tool})
+    manager = McpSessionManager([])
+    manager._connections = [conn_alpha, conn_beta]
+
+    await manager.start()
+    ping_descriptors = manager.find_tools(namespace="alpha")
+    pong_descriptors = manager.find_tools(predicate=lambda d: d.original_name == "pong")
+
+    assert [descriptor.exposed_name for descriptor in ping_descriptors] == ["alpha.ping"]
+    assert [descriptor.exposed_name for descriptor in pong_descriptors] == ["beta.pong"]
+
+
+@pytest.mark.anyio("asyncio")
+async def test_mcp_session_manager_remove_server_disconnects_and_updates_registry():
+    tool = mcp_types.Tool(name="ping", inputSchema={"type": "object", "properties": {}})
+    connection = _AsyncStubConnection(namespace=None, tools={"ping": tool})
+    manager = McpSessionManager([])
+    manager._connections = [connection]
+
+    await manager.start()
+    removed = await manager.remove_server(connection.connection_id)
+
+    assert removed is True
+    assert connection.close_calls == 1
+    assert manager.connections == ()
+    assert manager.tool_names == []
+
+
+@pytest.mark.anyio("asyncio")
+async def test_mcp_session_manager_remove_server_returns_false_for_unknown_id():
+    manager = McpSessionManager([])
+
+    result = await manager.remove_server("missing-id")
+
+    assert result is False
