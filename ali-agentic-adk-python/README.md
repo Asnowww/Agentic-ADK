@@ -91,8 +91,6 @@ python -m pytest
 
 Tests rely on mocks and do not contact external services. Ensure required development dependencies are installed (`pip install -e .[dev]` if you maintain an extras definition).
 
-## License
-
 ## MCP Extension
 
 ```python
