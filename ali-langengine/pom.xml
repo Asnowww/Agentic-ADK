@@ -83,6 +83,7 @@
 		<module>ali-langengine-community/ali-langengine-polardb</module>
 		<module>ali-langengine-community/ali-langengine-pinecone</module>
 		<module>ali-langengine-community/ali-langengine-milvus</module>
+		<module>ali-langengine-community/ali-langengine-infinity</module>
 		<module>ali-langengine-community/ali-langengine-omibase</module>
 		<module>ali-langengine-community/ali-langengine-marqo</module>
 		<module>ali-langengine-community/ali-langengine-chroma</module>
@@ -90,6 +91,7 @@
 		<module>ali-langengine-community/ali-langengine-ngt</module>
 		<module>ali-langengine-community/ali-langengine-proxima</module>
 		<module>ali-langengine-community/ali-langengine-txtai</module>
+		<module>ali-langengine-community/ali-langengine-turbopuffer</module>
 		<module>ali-langengine-community/ali-langengine-typesense</module>
 		<module>ali-langengine-community/ali-langengine-vald</module>
 		<module>ali-langengine-community/ali-langengine-tuargpg</module>
@@ -99,6 +101,7 @@
 		<module>ali-langengine-community/ali-langengine-djl</module>
 		<module>ali-langengine-community/ali-langengine-huggingface</module>
 		<module>ali-langengine-community/ali-langengine-sqlite</module>
+		<module>ali-langengine-community/ali-langengine-sqlite-vss</module>
 		<module>ali-langengine-community/ali-langengine-xingchen</module>
 		<module>ali-langengine-community/ali-langengine-xinghuo</module>
 		<module>ali-langengine-community/ali-langengine-msearch</module>

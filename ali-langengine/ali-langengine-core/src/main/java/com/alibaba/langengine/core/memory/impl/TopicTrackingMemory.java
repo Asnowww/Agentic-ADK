@@ -89,7 +89,7 @@ public class TopicTrackingMemory extends BaseMemory {
      * 话题热度衰减因子（每天）
      * 每过一天，热度衰减的比例
      */
-    private double decayFactor = 0.95;
+    private static final double DECAY_FACTOR = 0.95;
 
     /**
      * 最大跟踪话题数量
@@ -137,10 +137,10 @@ public class TopicTrackingMemory extends BaseMemory {
             double baseScore = Math.log(frequency + 1) / Math.log(10);
 
             // 时间衰减：最近出现的话题得分更高
-            double timeDecay = Math.pow(decayFactor, daysSinceLastSeen);
+            double timeDecay = Math.pow(DECAY_FACTOR, daysSinceLastSeen);
 
             // 持续性奖励：长期反复出现的话题得分更高
-            double persistenceBonus = Math.pow(decayFactor, daysSinceFirstSeen) * 0.5;
+            double persistenceBonus = Math.pow(DECAY_FACTOR, daysSinceFirstSeen) * 0.5;
 
             this.score = baseScore * timeDecay + persistenceBonus;
         }
