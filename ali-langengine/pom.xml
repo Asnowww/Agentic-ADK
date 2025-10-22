@@ -120,6 +120,7 @@
 		<module>ali-langengine-community/ali-langengine-elasticsearch</module>
 		<module>ali-langengine-community/ali-langengine-serp</module>
 		<module>ali-langengine-community/ali-langengine-pgvector</module>
+		<module>ali-langengine-community/ali-langengine-neon</module>
 		<module>ali-langengine-community/ali-langengine-mongodb</module>
 		<module>ali-langengine-community/ali-langengine-aliyunaisearch</module>
 		<module>ali-langengine-community/ali-langengine-sinanews</module>
