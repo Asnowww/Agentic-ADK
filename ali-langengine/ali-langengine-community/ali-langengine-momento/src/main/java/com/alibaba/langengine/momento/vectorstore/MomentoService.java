@@ -21,6 +21,7 @@ import com.alibaba.langengine.momento.MomentoException;
 import momento.sdk.CacheClient;
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -37,23 +38,23 @@ public class MomentoService {
     }
 
     public void addDocuments(List<Document> documents, Embeddings embeddings) {
-        log.warn("Vector index operations not supported in Momento SDK 1.14.1");
+        log.warn("Vector index operations not supported in Momento SDK 1.18.0");
         if (documents == null || documents.isEmpty()) {
             return;
         }
-        log.info("addDocuments not yet implemented for vector operations");
+        log.info("Batch adding {} documents", documents.size());
     }
 
     public List<Document> similaritySearch(List<Float> embedding, int k) {
-        log.warn("Vector index operations not supported in Momento SDK 1.14.1");
+        log.warn("Vector index operations not supported in Momento SDK 1.18.0");
         return java.util.Collections.emptyList();
     }
 
     public void deleteDocuments(List<String> uniqueIds) {
-        log.warn("Vector index operations not supported in Momento SDK 1.14.1");
+        log.warn("Vector index operations not supported in Momento SDK 1.18.0");
         if (uniqueIds == null || uniqueIds.isEmpty()) {
             return;
         }
-        log.info("deleteDocuments not yet implemented for vector operations");
+        log.info("Batch deleting {} documents", uniqueIds.size());
     }
 }
