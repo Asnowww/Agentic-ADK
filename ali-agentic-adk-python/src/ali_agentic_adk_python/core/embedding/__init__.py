@@ -36,12 +36,17 @@ from .doubao_embedding import DoubaoEmbedding
 from .anthropic_embedding import AnthropicEmbedding
 from .deepseek_embedding import DeepSeekEmbedding
 from .tencent_embedding import TencentEmbedding
+from .cloudflare_embedding import CloudflareEmbedding
+from .replicate_embedding import ReplicateEmbedding
+from .fireworks_embedding import FireworksEmbedding
+from .together_embedding import TogetherEmbedding
 from .voyage_embedding import VoyageEmbedding
 from .zhipu_embedding import ZhipuEmbedding
 from .yi_embedding import YiEmbedding
 from .sensenova_embedding import SenseNovaEmbedding
 from .siliconflow_embedding import SiliconFlowEmbedding
 from .ollama_embedding import OllamaEmbedding
+from .nomic_embedding import NomicEmbedding
 
 
 __all__ = [
@@ -62,10 +67,15 @@ __all__ = [
     "AnthropicEmbedding",
     "DeepSeekEmbedding",
     "TencentEmbedding",
+    "CloudflareEmbedding",
+    "ReplicateEmbedding",
+    "FireworksEmbedding",
+    "TogetherEmbedding",
     "VoyageEmbedding",
     "ZhipuEmbedding",
     "YiEmbedding",
     "SenseNovaEmbedding",
     "SiliconFlowEmbedding",
     "OllamaEmbedding",
+    "NomicEmbedding",
 ]
