@@ -120,6 +120,7 @@
 		<module>ali-langengine-community/ali-langengine-elasticsearch</module>
 		<module>ali-langengine-community/ali-langengine-serp</module>
 		<module>ali-langengine-community/ali-langengine-pgvector</module>
+		<module>ali-langengine-community/ali-langengine-neon</module>
 		<module>ali-langengine-community/ali-langengine-mongodb</module>
 		<module>ali-langengine-community/ali-langengine-aliyunaisearch</module>
 		<module>ali-langengine-community/ali-langengine-sinanews</module>
@@ -224,6 +225,7 @@
 		<module>ali-langengine-community/ali-langengine-vectordb-rust</module>
 		<module>ali-langengine-community/ali-langengine-vectra</module>
 		<module>ali-langengine-community/ali-langengine-tile38</module>
+		<module>ali-langengine-community/ali-langengine-momento</module>
   </modules>
 
 	<dependencyManagement>
@@ -682,8 +684,8 @@
 								<goals>
 									<goal>aggregate</goal>
 								</goals>
-							</execution>
-						</executions>
+						</execution>
+					</executions>
 					</plugin>
 				</plugins>
 			</build>
