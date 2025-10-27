@@ -17,6 +17,7 @@ package com.alibaba.langengine.docloader.dingtalk;
 
 import com.alibaba.langengine.core.docloader.BaseLoader;
 import com.alibaba.langengine.core.indexes.Document;
+import com.alibaba.langengine.docloader.dingtalk.metrics.DingTalkMetrics;
 import com.alibaba.langengine.docloader.dingtalk.service.*;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
@@ -30,9 +31,9 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
- * 钉钉文档加载器
+ * 钉钉文档加载器 - 增强版，包含指标收集
  *
- * @author Libres-coder
+ * @author Libres-coder, Agentic-ADK
  */
 @Slf4j
 @Data
@@ -66,6 +67,11 @@ public class DingTalkDocLoader extends BaseLoader {
      */
     private String domain = "https://www.dingtalk.com";
 
+    /**
+     * 是否启用指标收集
+     */
+    private boolean metricsEnabled = true;
+
     public DingTalkDocLoader(String appKey, String appSecret, Long timeout) {
         service = new DingTalkService(appKey, appSecret, Duration.ofSeconds(timeout));
     }
@@ -96,15 +102,21 @@ public class DingTalkDocLoader extends BaseLoader {
     private List<Document> loadSingleDocument() {
         try {
             DingTalkResult<DingTalkDocContent> result = service.getDocContent(docId);
-            
+
             if (result.getErrCode() != 0) {
                 log.error("Failed to load DingTalk document {}: {}", docId, result.getErrMsg());
+                if (metricsEnabled) {
+                    service.getMetrics().recordDocumentFailed();
+                }
                 return new ArrayList<>();
             }
 
             DingTalkDocContent content = result.getResult();
             if (content == null || StringUtils.isEmpty(content.getDocContent())) {
                 log.warn("DingTalk document {} has no content", docId);
+                if (metricsEnabled) {
+                    service.getMetrics().recordDocumentSkipped();
+                }
                 return new ArrayList<>();
             }
 
@@ -126,9 +138,17 @@ public class DingTalkDocLoader extends BaseLoader {
             document.setMetadata(metadata);
             List<Document> documents = new ArrayList<>();
             documents.add(document);
+
+            if (metricsEnabled) {
+                service.getMetrics().recordDocumentLoaded();
+            }
+
             return documents;
         } catch (Exception e) {
             log.error("Error loading DingTalk document: {}", docId, e);
+            if (metricsEnabled) {
+                service.getMetrics().recordDocumentFailed();
+            }
             throw new RuntimeException("Failed to load DingTalk document: " + docId, e);
         }
     }
@@ -146,7 +166,7 @@ public class DingTalkDocLoader extends BaseLoader {
         try {
             while (hasMore) {
                 DingTalkResult<DingTalkDocList> result = service.getDocList(workspaceId, maxResults, nextToken);
-                
+
                 if (result.getErrCode() != 0) {
                     log.error("Failed to load workspace documents: {}", result.getErrMsg());
                     break;
@@ -162,7 +182,7 @@ public class DingTalkDocLoader extends BaseLoader {
                     .map(this::loadDocFromInfo)
                     .filter(doc -> doc != null)
                     .collect(Collectors.toList());
-                
+
                 allDocuments.addAll(batchDocuments);
 
                 // 更新分页信息
@@ -174,6 +194,9 @@ public class DingTalkDocLoader extends BaseLoader {
             return allDocuments;
         } catch (Exception e) {
             log.error("Error loading DingTalk workspace documents: {}", workspaceId, e);
+            if (metricsEnabled) {
+                service.getMetrics().recordDocumentFailed();
+            }
             throw new RuntimeException("Failed to load DingTalk workspace documents: " + workspaceId, e);
         }
     }
@@ -188,15 +211,21 @@ public class DingTalkDocLoader extends BaseLoader {
         try {
             String docId = docInfo.getDocId();
             DingTalkResult<DingTalkDocContent> result = service.getDocContent(docId);
-            
+
             if (result.getErrCode() != 0) {
                 log.warn("Failed to load document {}: {}", docId, result.getErrMsg());
+                if (metricsEnabled) {
+                    service.getMetrics().recordDocumentFailed();
+                }
                 return null;
             }
 
             DingTalkDocContent content = result.getResult();
             if (content == null || StringUtils.isEmpty(content.getDocContent())) {
                 log.debug("Document {} has no content", docId);
+                if (metricsEnabled) {
+                    service.getMetrics().recordDocumentSkipped();
+                }
                 return null;
             }
 
@@ -217,9 +246,17 @@ public class DingTalkDocLoader extends BaseLoader {
             metadata.put("url", domain + "/doc/" + docId);
 
             document.setMetadata(metadata);
+
+            if (metricsEnabled) {
+                service.getMetrics().recordDocumentLoaded();
+            }
+
             return document;
         } catch (Exception e) {
             log.error("Error loading document {}: {}", docInfo.getDocId(), e.getMessage());
+            if (metricsEnabled) {
+                service.getMetrics().recordDocumentFailed();
+            }
             return null;
         }
     }
@@ -246,5 +283,24 @@ public class DingTalkDocLoader extends BaseLoader {
             }
         }
         return load();
+    }
+
+    /**
+     * 获取指标摘要
+     */
+    public DingTalkMetrics.MetricsSummary getMetricsSummary() {
+        if (service != null && service.getMetrics() != null) {
+            return service.getMetrics().getSummary();
+        }
+        return null;
+    }
+
+    /**
+     * 重置指标
+     */
+    public void resetMetrics() {
+        if (service != null && service.getMetrics() != null) {
+            service.getMetrics().reset();
+        }
     }
 }
