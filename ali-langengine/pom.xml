@@ -87,6 +87,7 @@
 		<module>ali-langengine-community/ali-langengine-omibase</module>
 		<module>ali-langengine-community/ali-langengine-marqo</module>
 		<module>ali-langengine-community/ali-langengine-chroma</module>
+		<module>ali-langengine-community/ali-langengine-oramasearch</module>
 		<module>ali-langengine-community/ali-langengine-hnswlib</module>
 		<module>ali-langengine-community/ali-langengine-ngt</module>
 		<module>ali-langengine-community/ali-langengine-proxima</module>
