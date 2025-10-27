@@ -21,44 +21,22 @@
 
 from __future__ import annotations
 
-from typing import Optional
+from typing import Any
 
-from pydantic import BaseModel, Field
-
-
-class BrowserUseRequest(BaseModel):
-    """浏览器使用请求"""
-
-    command: str
-    region_id: Optional[str] = Field(default=None, alias="regionId")
-    endpoint: Optional[str] = None
-    computer_resource_id: Optional[str] = Field(default=None, alias="computerResourceId")
-    timeout: Optional[int] = Field(default=None, alias="timeout", ge=1)
-
-    model_config = {
-        "populate_by_name": True,
-    }
+from ..domain.models import BrowserUseRequest, BrowserUseResponse
+from .atomic_operations import AtomicOperations
 
 
-class BrowserUseResponse(BaseModel):
-    """浏览器使用响应"""
+class AppBuilderService:
+    """Facade used by the App Builder flow to execute Computer Use tasks."""
 
-    is_success: bool = Field(default=False, alias="isSuccess")
-    message: str = ""
-    browser_use_output: Optional[str] = Field(default=None, alias="browserUseOutput")
-    dropped: Optional[int] = None
+    def __init__(self, atomic_operations: AtomicOperations):
+        self._atomic_operations = atomic_operations
 
-    model_config = {
-        "populate_by_name": True,
-    }
+    def submit_execute_script_task(self, browser_use_request: BrowserUseRequest | dict[str, Any]) -> BrowserUseResponse:
+        """Execute a script request and return its result."""
 
-    @classmethod
-    def success(cls, message: str = "Success", browser_use_output: Optional[str] = None,
-                dropped: Optional[int] = None) -> "BrowserUseResponse":
-        """创建成功响应"""
-        return cls(is_success=True, message=message, browser_use_output=browser_use_output, dropped=dropped)
+        return self._atomic_operations.do_script_execute(browser_use_request)
 
-    @classmethod
-    def error(cls, message: str = "Failed", dropped: Optional[int] = None) -> "BrowserUseResponse":
-        """创建错误响应"""
-        return cls(is_success=False, message=message, dropped=dropped)
+
+__all__ = ["AppBuilderService"]
