@@ -105,7 +105,7 @@ public class TestGraphAdvanced {
             System.out.println("Result: " + event.getData())
         );
 
-        System.out.println("✅ Conditional branching completed\n");
+        System.out.println(" Conditional branching completed\n");
     }
 
     @Test
@@ -200,7 +200,7 @@ public class TestGraphAdvanced {
             System.out.println("Result: " + event.getData())
         );
 
-        System.out.println("✅ Complex workflow completed\n");
+        System.out.println(" Complex workflow completed\n");
     }
 
     @Test
@@ -306,6 +306,6 @@ public class TestGraphAdvanced {
             System.out.println("Result: " + event.getData())
         );
 
-        System.out.println("✅ Multi-branch decision completed\n");
+        System.out.println(" Multi-branch decision completed\n");
     }
 }
