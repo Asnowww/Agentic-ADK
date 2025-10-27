@@ -10,6 +10,9 @@ mcp>=1.15.0
 requests
 tencentcloud-sdk-python
 replicate
+PyPDF2
+PyYAML
+python-docx
 
 # Alibaba Cloud SDKs
 alibabacloud_ecd20200930

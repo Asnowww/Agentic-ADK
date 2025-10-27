@@ -1,4 +1,4 @@
-package com.alibaba.agentic.example;
+package com.alibaba.agentic.example.graph;
 
 import com.alibaba.agentic.core.engine.node.FlowCanvas;
 import com.alibaba.agentic.core.engine.node.sub.ToolFlowNode;
@@ -8,6 +8,7 @@ import com.alibaba.agentic.core.executor.Result;
 import com.alibaba.agentic.core.executor.SystemContext;
 import com.alibaba.agentic.core.runner.Runner;
 import com.alibaba.agentic.core.tools.BaseTool;
+import com.alibaba.agentic.example.Application;
 import io.reactivex.rxjava3.core.Flowable;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -18,10 +19,10 @@ import org.springframework.test.context.junit4.SpringRunner;
 import java.util.Map;
 
 /**
- * DESCRIPTION
+ * Basic graph workflow examples
  *
- * @author baliang.smy
- * @date 2025/8/4 10:34
+ * @author Libres-coder
+ * @date 2025/10/18
  */
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = { Application.class })
@@ -89,7 +90,7 @@ public class TestGraph {
             System.out.println("Result: " + event.getData())
         );
 
-        System.out.println("✅ Sequential flow completed\n");
+        System.out.println(" Sequential flow completed\n");
     }
 
     @Test
@@ -125,7 +126,7 @@ public class TestGraph {
             System.out.println("Calculation result: " + event.getData())
         );
 
-        System.out.println("✅ Tool with parameters completed\n");
+        System.out.println(" Tool with parameters completed\n");
     }
 
     @Test
@@ -204,6 +205,6 @@ public class TestGraph {
             System.out.println("Pipeline result: " + event.getData())
         );
 
-        System.out.println("✅ Multiple tool nodes pipeline completed\n");
+        System.out.println(" Multiple tool nodes pipeline completed\n");
     }
 }

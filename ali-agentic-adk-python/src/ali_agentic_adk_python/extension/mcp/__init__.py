@@ -39,7 +39,13 @@ from .config import (
     McpSseServerConfig,
     McpStdioServerConfig,
 )
-from .connection import McpSessionManager
+from .connection import (
+    McpRefreshError,
+    McpSessionError,
+    McpSessionManager,
+    McpConnectionNotFoundError,
+    McpToolNotFoundError,
+)
 from .tool import McpTool
 
 __all__ = [
@@ -47,6 +53,10 @@ __all__ = [
     "McpServerTransport",
     "McpSseServerConfig",
     "McpStdioServerConfig",
+    "McpSessionError",
+    "McpRefreshError",
+    "McpConnectionNotFoundError",
+    "McpToolNotFoundError",
     "McpSessionManager",
     "McpTool",
 ]

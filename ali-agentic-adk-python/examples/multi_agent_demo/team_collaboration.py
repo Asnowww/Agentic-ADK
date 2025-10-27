@@ -96,11 +96,11 @@ class Project:
 项目: {self.name}
 进度: {completed}/{total} 任务完成
 状态:
-  - 需求: {'✓' if self.requirements else '○'}
-  - 架构: {'✓' if self.architecture else '○'}
-  - 开发: {'✓' if self.code else '○'}
-  - 测试: {'✓' if self.test_results else '○'}
-  - 部署: {'✓' if self.deployment else '○'}
+  - 需求: {'Done' if self.requirements else 'Pending'}
+  - 架构: {'Done' if self.architecture else 'Pending'}
+  - 开发: {'Done' if self.code else 'Pending'}
+  - 测试: {'Done' if self.test_results else 'Pending'}
+  - 部署: {'Done' if self.deployment else 'Pending'}
 """
         return summary
 
@@ -406,27 +406,27 @@ async def run_team_collaboration(project_name: str, project_desc: str) -> str:
     # 执行完整的开发流程
     logger.info("\n[阶段1] 需求分析")
     req_result = await analyze_requirements(project_name, project_desc)
-    print(f"✓ {req_result['message']}")
+    print(f"[Done] {req_result['message']}")
     
     logger.info("\n[阶段2] 架构设计")
     arch_result = await design_architecture(current_project.requirements)
-    print(f"✓ {arch_result['message']}")
+    print(f"[Done] {arch_result['message']}")
     
     logger.info("\n[阶段3] 并行开发")
     # 模拟并行开发
     backend_task = implement_backend()
     frontend_task = implement_frontend()
     backend_result, frontend_result = await asyncio.gather(backend_task, frontend_task)
-    print(f"✓ {backend_result['message']}")
-    print(f"✓ {frontend_result['message']}")
+    print(f"[Done] {backend_result['message']}")
+    print(f"[Done] {frontend_result['message']}")
     
     logger.info("\n[阶段4] 质量测试")
     test_result = await run_tests()
-    print(f"✓ {test_result['message']}")
+    print(f"[Done] {test_result['message']}")
     
     logger.info("\n[阶段5] 生产部署")
     deploy_result = await deploy_application()
-    print(f"✓ {deploy_result['message']}")
+    print(f"[Done] {deploy_result['message']}")
     
     logger.info("\n[阶段6] 生成报告")
     report_result = await generate_report()
