@@ -146,7 +146,7 @@ public class AiRedisTemplate {
     @PreDestroy
     void destroy() {
         if (null == jedisPool) {
-            log.info("redis is null dont need to destroy");
+            log.info("redis is null, doesn't need to destroy");
         } else {
             jedisPool.destroy();
             log.info("destroy redis success");

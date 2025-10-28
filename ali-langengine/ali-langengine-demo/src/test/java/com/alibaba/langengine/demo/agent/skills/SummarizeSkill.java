@@ -31,7 +31,7 @@ import java.util.Arrays;
 public class SummarizeSkill extends SemanticKernelSkill {
 
     private static final String PROMPT = "[SUMMARIZATION RULES]\n" +
-            "DONT WASTE WORDS\n" +
+            "DON'T WASTE WORDS\n" +
             "USE SHORT, CLEAR, COMPLETE SENTENCES.\n" +
             "DO NOT USE BULLET POINTS OR DASHES.\n" +
             "USE ACTIVE VOICE.\n" +

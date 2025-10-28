@@ -45,7 +45,7 @@ public class WriteDesign extends Action {
             "\n" +
             "## Implementation approach: Provide as Plain text. Analyze the difficult points of the requirements, select the appropriate open-source framework.\n" +
             "\n" +
-            "## Python package name: Provide as Python str with python triple quoto, concise and clear, characters only use a combination of all lowercase and underscores\n" +
+            "## Python package name: Provide as Python str with python triple quote, concise and clear, characters only use a combination of all lowercase and underscores\n" +
             "\n" +
             "## File list: Provided as Python list[str], the list of ONLY REQUIRED files needed to write the program(LESS IS MORE!). Only need relative paths, comply with PEP8 standards. ALWAYS write a main.py or app.py here\n" +
             "\n" +
@@ -98,7 +98,7 @@ public class WriteDesign extends Action {
             "\n" +
             "## Implementation approach: Provide as Plain text. Analyze the difficult points of the requirements, select the appropriate open-source framework.\n" +
             "\n" +
-            "## Python package name: Provide as Python str with python triple quoto, concise and clear, characters only use a combination of all lowercase and underscores\n" +
+            "## Python package name: Provide as Python str with python triple quote, concise and clear, characters only use a combination of all lowercase and underscores\n" +
             "\n" +
             "## File list: Provided as Python list[str], the list of ONLY REQUIRED files needed to write the program(LESS IS MORE!). Only need relative paths, comply with PEP8 standards. ALWAYS write a main.py or app.py here\n" +
             "\n" +
@@ -160,7 +160,7 @@ public class WriteDesign extends Action {
             "\n" +
             "## Implementation approach: Provide as Plain text. Analyze the difficult points of the requirements, select the appropriate open-source framework.\n" +
             "\n" +
-            "## Python package name: Provide as Python str with python triple quoto, concise and clear, characters only use a combination of all lowercase and underscores\n" +
+            "## Python package name: Provide as Python str with python triple quote, concise and clear, characters only use a combination of all lowercase and underscores\n" +
             "\n" +
             "## File list: Provided as Python list[str], the list of ONLY REQUIRED files needed to write the program(LESS IS MORE!). Only need relative paths, comply with PEP8 standards. ALWAYS write a main.py or app.py here\n" +
             "\n" +

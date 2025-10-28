@@ -38,7 +38,7 @@ public class WriteTest extends Action {
             "```\n" +
             "Note that the code to test is at {source_file_path}, we will put your test code at {workspace}/tests/{test_file_name}, and run your test code from {workspace},\n" +
             "you should correctly import the necessary classes based on these file locations!\n" +
-            "## {test_file_name}: Write test code with triple quoto. Do your best to implement THIS ONLY ONE FILE.";
+            "## {test_file_name}: Write test code with triple quote. Do your best to implement THIS ONLY ONE FILE.";
 
     public WriteTest(String name, Object context, BaseLanguageModel llm) {
         super(name, context, llm);

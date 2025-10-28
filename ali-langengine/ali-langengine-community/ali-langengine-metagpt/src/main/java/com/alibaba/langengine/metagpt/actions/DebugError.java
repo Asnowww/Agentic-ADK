@@ -32,7 +32,7 @@ public class DebugError extends Action {
             "{context}\n" +
             "---\n" +
             "Now you should start rewriting the code:\n" +
-            "## file name of the code to rewrite: Write code with triple quoto. Do your best to implement THIS IN ONLY ONE FILE.";
+            "## file name of the code to rewrite: Write code with triple quote. Do your best to implement THIS IN ONLY ONE FILE.";
 
     public DebugError(String name, Object context, BaseLanguageModel llm) {
         super(name, context, llm);
